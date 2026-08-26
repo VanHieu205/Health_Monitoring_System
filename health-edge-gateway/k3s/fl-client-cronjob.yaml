@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fl-client-job
+  namespace: health-edge
+spec:
+  schedule: "0 2 * * *" # Run nightly FL training
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: fl-client
+            image: health-edge-gateway:latest

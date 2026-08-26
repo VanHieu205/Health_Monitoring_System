@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Health Monitoring Cloud API
+  version: 1.0.0
+paths:
+  /api/v1/devices:
+    post:
+      summary: Register a new IoT device
+      responses:
+        '201':
+          description: Device created
+  /api/v1/vitals/trend:
+    get:
+      summary: Query aggregated vital sign trends
+      responses:
+        '200':
+          description: OK

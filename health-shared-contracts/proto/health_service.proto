@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package com.health.proto;
+
+option java_multiple_files = true;
+option java_package = "com.health.proto";
+
+service HealthDataService {
+    rpc StreamVitalSigns (stream VitalSignRecord) returns (StreamSummary);
+    rpc SendAlert (AlertNotification) returns (AlertAck);
+}
+
+message VitalSignRecord {
+    string device_id = 1;
+    uint64 timestamp = 2;
+    uint32 heart_rate = 3;
+    uint32 spo2 = 4;
+    int32 accel_x = 5;
+    int32 accel_y = 6;
+    int32 accel_z = 7;
+    uint32 event_flag = 8;
+    uint32 battery_level = 9;
+}
+
+message StreamSummary {
+    uint32 count = 1;
+    bool success = 2;
+}
+
+message AlertNotification {
+    string device_id = 1;
+    string alert_type = 2;
+    uint64 timestamp = 3;
+    string message = 4;
+}
+
+message AlertAck {
+    bool acknowledged = 1;
+}

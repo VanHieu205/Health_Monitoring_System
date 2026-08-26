@@ -1,0 +1,1 @@
+// Execute SNN model inference within <5ms

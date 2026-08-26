@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package com.health.mlserver.proto;
+
+option java_multiple_files = true;
+option java_package = "com.health.mlserver.proto";
+
+service FederatedLearningService {
+    rpc GetGlobalModel (ModelRequest) returns (GlobalModelResponse);
+    rpc SubmitModelUpdate (ClientUpdate) returns (UpdateAck);
+}
+
+message ModelRequest {
+    string client_id = 1;
+    uint32 round_id = 2;
+}
+
+message GlobalModelResponse {
+    uint32 round_id = 1;
+    bytes model_weights = 2;
+    string architecture_version = 3;
+}
+
+message ClientUpdate {
+    string client_id = 1;
+    uint32 round_id = 2;
+    bytes weight_diffs = 3;
+    uint32 num_samples = 4;
+    double training_loss = 5;
+}
+
+message UpdateAck {
+    bool accepted = 1;
+    string status_message = 2;
+}

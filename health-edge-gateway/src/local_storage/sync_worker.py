@@ -1,0 +1,1 @@
+# Batch sync data to Cloud when network is restored

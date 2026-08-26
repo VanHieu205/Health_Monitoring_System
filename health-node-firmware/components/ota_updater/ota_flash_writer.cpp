@@ -1,0 +1,1 @@
+// Writing OTA chunks into secondary partition slot

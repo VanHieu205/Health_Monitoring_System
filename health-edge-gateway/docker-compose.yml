@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  ble-receiver:
+    build: .
+    command: python src/ble_receiver/ble_scanner.py
+    privileged: true
+    network_mode: host
+  ml-inference:
+    build: .
+    command: python src/ml_inference/inference_service.py
+  fl-client:
+    build: .
+    command: python src/federated_learning/fl_client.py

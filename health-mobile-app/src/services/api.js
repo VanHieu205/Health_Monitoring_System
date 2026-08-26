@@ -1,0 +1,1 @@
+export const fetchVitals = async () => {};

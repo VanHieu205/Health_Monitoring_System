@@ -1,0 +1,1 @@
+// AES-CCM hardware crypto encryption

@@ -1,0 +1,1 @@
+# Informer model wrapper for long-sequence forecasting

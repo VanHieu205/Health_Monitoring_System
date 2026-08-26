@@ -1,0 +1,1 @@
+# Unpack 18-byte binary struct to dictionary
