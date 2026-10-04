@@ -1,0 +1,127 @@
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+pip-wheel-metadata/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+poetry.toml
+
+# ==========================================
+# Environment / secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Local databases & buffers
+# ==========================================
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Runtime data (SQLite buffer, datasets)
+data/
+datasets/
+*.csv
+
+# ==========================================
+# Logs / notebooks / temp
+# ==========================================
+*.log
+logs/
+.ipynb_checkpoints/
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# ==========================================
+# ML artifacts (keep source, not weights)
+# ==========================================
+*.pt
+*.pth
+*.h5
+*.keras
+*.onnx
+*.tflite
+*.pkl
+*.joblib
+
+# ==========================================
+# Java / Gradle (health-cloud-backend)
+# ==========================================
+.gradle/
+**/build/
+**/bin/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+hs_err_pid*
+replay_pid*
+.nb-gradle/
+**/nb-cache/
+
+# ==========================================
+# Node (if added later)
+# ==========================================
+node_modules/
+npm-debug.log*
+
+# ==========================================
+# Docker / MQTT local runtime
+# ==========================================
+docker-compose.override.yml
+mosquitto/data/
+mosquitto/log/
+*.pid
+
+# ==========================================
+# Firmware / embedded build leftovers
+# ==========================================
+**/build/CMakeFiles/
+**/sdkconfig.old
+*.elf
+*.map
+*.bin
+!**/bootloader*.bin
+
+# ==========================================
+# IDE / OS / Cursor
+# ==========================================
+.vscode/
+.idea/
+.vs/
+.cursor/
+*.iml
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Accidental extra tree at repo root (code lives under health-edge-gateway/)
+/src/

@@ -1,13 +1,32 @@
 version: '3.8'
+
 services:
+  local-mqtt:
+    image: eclipse-mosquitto:2
+    platform: linux/amd64  #delete when run with the hardware
+    ports:
+      - "1883:1883"
+    command: sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
+
   ble-receiver:
     build: .
+    platform: linux/amd64
     command: python src/ble_receiver/ble_scanner.py
     privileged: true
     network_mode: host
+    depends_on:
+      - local-mqtt
+
   ml-inference:
     build: .
+    platform: linux/amd64
     command: python src/ml_inference/inference_service.py
+    depends_on:
+      - local-mqtt
+
   fl-client:
     build: .
+    platform: linux/amd64
     command: python src/federated_learning/fl_client.py
+    depends_on:
+      - local-mqtt
