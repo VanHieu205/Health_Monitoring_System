@@ -10,7 +10,6 @@ python = "^3.10"
 torch = ">=2.0.0"
 grpcio = "^1.54.0"
 paho-mqtt = "^1.6.1"
-bleak = "^0.20.0"
 sqlalchemy = "^2.0.0"
 prometheus-client = "^0.16.0"
 

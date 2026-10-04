@@ -3,7 +3,7 @@ version: '3.8'
 services:
   local-mqtt:
     image: eclipse-mosquitto:2
-    platform: linux/amd64  #delete when run with the hardware
+    platform: linux/amd64 #delete when run with the hardware
     ports:
       - "1883:1883"
     command: sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
