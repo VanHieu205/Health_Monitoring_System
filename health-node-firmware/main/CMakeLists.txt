@@ -1,3 +1,3 @@
-idf_component_register(SRCS "main.cpp" "task_scheduler.cpp"
+idf_component_register(SRCS "main.cpp" "task_scheduler.cpp" "mqtt_service.cpp"
                     INCLUDE_DIRS "."
-                    REQUIRES mqtt_service)
+                    REQUIRES esp_wifi esp_event esp_netif nvs_flash mqtt json esp_timer)

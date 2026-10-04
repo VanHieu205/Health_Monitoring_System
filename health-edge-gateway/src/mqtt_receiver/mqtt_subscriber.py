@@ -1,5 +1,6 @@
 # MQTT Subscriber for Raspberry Pi 4 (Receives Mock Health Data from ESP32-C3)
 import json
+# pyrefly: ignore [missing-import]
 import paho.mqtt.client as mqtt
 
 # MQTT Broker Configuration
