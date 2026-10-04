@@ -184,14 +184,3 @@ Ví dụ **đúng** khi buffer ngắn: `ok=false`, `status=incomplete_protocol`,
 Ví dụ **scored** (minh họa): median HR 80, SpO2 98, không nhiệt, SQI pass → điểm 0+0, `subset_total=0`, `n_components=2`, `reasons` chứa omitted temperature.
 
 ---
-
-## 6. Việc còn lại trước tuyên bố y tế
-
-1. Hiệu chuẩn IMU (ROC ngồi yên / nhiễu) và khớp LSB/g firmware.
-2. Hiệu chuẩn SpO2/HR vs thiết bị đối chứng (hướng ISO 80601-2-61).
-3. Bland–Altman nhiệt + \(\delta\).
-4. Gắn nhiệt vào packet ESP32 nếu cần 3 thành phần.
-5. TinyML chỉ sau **calibration xác suất** và **không** thay bảng NEWS2.
-6. Validation trên người, protocol đạo đức, phiên bản thuật toán (IEC 62304) khi đổi ngưỡng.
-
-Thay đổi cut-point hoặc ngưỡng RMS = **đổi `ALGORITHM_VERSION`**, không sửa thầm.
