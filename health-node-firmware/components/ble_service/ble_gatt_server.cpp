@@ -1,1 +1,0 @@
-// GATT server definition & characteristic callbacks

@@ -1,1 +1,0 @@
-// Binary pack/unpack logic for 18-byte struct

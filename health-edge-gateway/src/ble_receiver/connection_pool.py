@@ -1,1 +1,0 @@
-# Manage concurrent BLE connections to multiple nodes
