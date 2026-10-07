@@ -12,7 +12,7 @@ if SRC_DIR not in sys.path:
 from local_storage.db_models import SessionLocal, SensorRecord
 
 # MQTT Broker Configuration
-BROKER_IP = "localhost"   # When running directly on Raspberry Pi (with Mosquitto installed)
+BROKER_IP = "192.168.137.185"   # When running directly on Raspberry Pi (with Mosquitto installed)
 BROKER_PORT = 1883
 TOPIC_DATA = "health/node/data"
 
