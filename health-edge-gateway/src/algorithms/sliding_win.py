@@ -1,4 +1,4 @@
-"""Kiosk measurement protocol: settle, acquire, plausibility filter, robust stats.
+"""PPG session protocol: settle, acquire, plausibility filter, robust stats.
 
 Reads the SQLite buffer written by ``mqtt_subscriber`` (Phase 1). Default
 table/columns match ``sensor_raw_data`` (``ax``, ``ay``, ``az``). Optional
@@ -53,6 +53,7 @@ class SessionWindow:
     median_temp: float | None = None
     iqr_hr: float | None = None
     iqr_spo2: float | None = None
+    iqr_temp: float | None = None
     mean_hr: float | None = None
     mean_spo2: float | None = None
     mean_temp: float | None = None
@@ -62,8 +63,15 @@ class SessionWindow:
     acquire_seconds: int = DEFAULT_ACQUIRE_SECONDS
     protocol_ok: bool = False
     protocol_reasons: tuple[str, ...] = ()
+    event_flags: list[int] = field(default_factory=list)
     table_name: str = DEFAULT_TABLE
     has_temperature_column: bool = False
+    has_event_flag_column: bool = False
+
+    @property
+    def watch_fall_candidate(self) -> bool:
+        """Bit 0 of ``event_flag`` in the 18-byte watch packet."""
+        return any(flag & 0x01 for flag in self.event_flags)
 
     @property
     def n_samples(self) -> int:
@@ -129,7 +137,10 @@ class SlidingWindowExtractor:
             mapping = self._map_columns(columns)
             t_end = now_unix if now_unix is not None else self._latest_timestamp(conn)
             if t_end is None:
-                return self._empty(has_temperature=mapping["temp"] is not None)
+                return self._empty(
+                    has_temperature=mapping["temp"] is not None,
+                    has_event_flag=mapping["event_flag"] is not None,
+                )
 
             t_start = t_end - self.window_seconds
             sql = self._select_sql(mapping)
@@ -158,6 +169,11 @@ class SlidingWindowExtractor:
             if mapping["temp"]
             else "NULL"
         )
+        flag_expr = (
+            _quote_ident(mapping["event_flag"])
+            if mapping["event_flag"]
+            else "NULL"
+        )
         return (
             f"SELECT timestamp AS timestamp, "
             f"{_quote_ident(mapping['hr'])} AS hr, "
@@ -165,7 +181,8 @@ class SlidingWindowExtractor:
             f"{temp_expr} AS temp, "
             f"{_quote_ident(mapping['acc_x'])} AS acc_x, "
             f"{_quote_ident(mapping['acc_y'])} AS acc_y, "
-            f"{_quote_ident(mapping['acc_z'])} AS acc_z "
+            f"{_quote_ident(mapping['acc_z'])} AS acc_z, "
+            f"{flag_expr} AS event_flag "
             f"FROM {quoted} "
             f"WHERE timestamp > ? AND timestamp <= ? "
             f"ORDER BY timestamp ASC"
@@ -206,6 +223,7 @@ class SlidingWindowExtractor:
             "acc_x": acc_x,
             "acc_y": acc_y,
             "acc_z": acc_z,
+            "event_flag": pick("event_flag"),
         }
 
     def _to_window(
@@ -216,6 +234,7 @@ class SlidingWindowExtractor:
         t_end: int,
     ) -> SessionWindow:
         has_temp = mapping["temp"] is not None
+        has_flag = mapping["event_flag"] is not None
         t_acquire_start = t_end - self.acquire_seconds
         n_raw = len(rows)
 
@@ -226,6 +245,7 @@ class SlidingWindowExtractor:
         acc_y: list[float] = []
         acc_z: list[float] = []
         temp: list[float] = []
+        event_flags: list[int] = []
 
         for row in rows:
             ts = int(row["timestamp"])
@@ -239,6 +259,10 @@ class SlidingWindowExtractor:
             acc_z.append(float(row["acc_z"]))
             if has_temp and row["temp"] is not None:
                 temp.append(float(row["temp"]))
+            if has_flag and row["event_flag"] is not None:
+                event_flags.append(int(row["event_flag"]))
+            else:
+                event_flags.append(0)
 
         hr_valid = [v for v in hr if self.hr_min <= v <= self.hr_max]
         spo2_valid = [v for v in spo2 if self.spo2_min <= v <= self.spo2_max]
@@ -279,6 +303,7 @@ class SlidingWindowExtractor:
             median_temp=_median(temp_valid),
             iqr_hr=_iqr(hr_valid),
             iqr_spo2=_iqr(spo2_valid),
+            iqr_temp=_iqr(temp_valid),
             mean_hr=_mean(hr_valid),
             mean_spo2=_mean(spo2_valid),
             mean_temp=_mean(temp_valid),
@@ -288,11 +313,13 @@ class SlidingWindowExtractor:
             acquire_seconds=self.acquire_seconds,
             protocol_ok=len(reasons) == 0,
             protocol_reasons=tuple(reasons),
+            event_flags=event_flags,
             table_name=self.table,
             has_temperature_column=has_temp,
+            has_event_flag_column=has_flag,
         )
 
-    def _empty(self, *, has_temperature: bool) -> SessionWindow:
+    def _empty(self, *, has_temperature: bool, has_event_flag: bool) -> SessionWindow:
         return SessionWindow(
             timestamps=[],
             hr=[],
@@ -301,6 +328,7 @@ class SlidingWindowExtractor:
             acc_y=[],
             acc_z=[],
             temp=[],
+            event_flags=[],
             n_raw_fetched=0,
             protocol_ok=False,
             protocol_reasons=("empty_buffer",),
@@ -308,6 +336,7 @@ class SlidingWindowExtractor:
             acquire_seconds=self.acquire_seconds,
             table_name=self.table,
             has_temperature_column=has_temperature,
+            has_event_flag_column=has_event_flag,
         )
 
 

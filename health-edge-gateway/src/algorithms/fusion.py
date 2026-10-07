@@ -1,49 +1,67 @@
-"""Fail-closed late fusion: SQI first, then NEWS2 subset sum.
+"""Decision-level fusion: combine branch *decisions* into a nurse alert.
 
-Clinical interpretation
------------------------
-Motion SQI is a **measurement validity** flag, not a risk weight. If the
-acquire window is not ``pass``, this module **abstains** (no total).
+This module does not weight probabilities. Fall, vitals, and device
+branches are gated independently; fusion applies a priority table.
 
-When SQI passes and the kiosk protocol is complete, the index is the
-**sum of NEWS2 points** for available vitals:
-
-    subset_total = pulse + SpO2_Scale1 [+ temperature]
-
-This is **not** full NEWS2 and **must not** use NEWS2 escalation bands
-(low / medium / high), which assume RR, BP, ACVPU and oxygen.
-
-TinyML is intentionally **not** mixed into ``subset_total``. An optional
-uncalibrated stub may be attached by the worker for research only.
+    fall_alert    always wins
+    vitals_invalid never becomes vital_alert
+    PPG fail does not block fall_alert
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
-from algorithms.motion_gate import MotionGateResult, SqiLevel
-from algorithms.news2_subset import ALGORITHM_VERSION, NEWS2_MAX_PER_VITAL
-from algorithms.physio_rule import PhysioNews2Result
-from algorithms.sliding_win import SessionWindow
-from algorithms.temp_rule import TemperatureNews2Result
+from algorithms.fall_pipeline import FallDecision, FallPipelineResult
+from algorithms.imu_fall_gate import ImuFallGateResult
+from algorithms.news2_subset import ALGORITHM_VERSION
+from algorithms.vitals_branch import VitalsBranchResult, VitalsDecision
 
-STATUS_SCORED = "scored"
-STATUS_INVALID = "invalid_measurement"
-STATUS_INCOMPLETE = "incomplete_protocol"
+
+class AlertLevel(str, Enum):
+    OK = "ok"
+    SIGNAL_POOR = "signal_poor"
+    CHECK_IN = "check_in"
+    VITAL_ALERT = "vital_alert"
+    FALL_ALERT = "fall_alert"
+
+    @property
+    def rank(self) -> int:
+        return _ALERT_RANK[self]
+
+
+_ALERT_RANK = {
+    AlertLevel.OK: 0,
+    AlertLevel.SIGNAL_POOR: 1,
+    AlertLevel.CHECK_IN: 2,
+    AlertLevel.VITAL_ALERT: 3,
+    AlertLevel.FALL_ALERT: 4,
+}
+
+# Backward-compatible names used in older kiosk logs.
+Tier = AlertLevel
 
 
 @dataclass(frozen=True)
 class FusionResult:
-    """Session decision: scored subset or explicit abstain."""
-
     status: str
     algorithm_version: str
+    alert_level: str
+    alert_source: str
+    tier: str
+    tier_source: str
     subset_total: int | None
-    max_subset: int | None
+    max_component: int | None
+    completeness: float
     n_components: int
+    max_subset: int | None
     hr_score: int | None
     spo2_score: int | None
     temp_score: int | None
+    ppg_valid: bool
+    fall_decision: str
+    temp_status: str
     sqi_level: str
     motion_passed: bool
     reasons: tuple[str, ...]
@@ -51,105 +69,95 @@ class FusionResult:
 
 
 class DecisionFusion:
-    """Abstain unless protocol + SQI pass; then add NEWS2 subset points."""
-
-    def __init__(self, *, require_temperature: bool = False) -> None:
-        self.require_temperature = require_temperature
+    """Priority fusion over fall + vitals decisions."""
 
     def fuse(
         self,
         *,
-        window: SessionWindow,
-        motion: MotionGateResult,
-        physio: PhysioNews2Result,
-        temperature: TemperatureNews2Result,
+        fall: FallPipelineResult,
+        vitals: VitalsBranchResult,
+        imu_gate: ImuFallGateResult,
+        temp_status: str,
+        ppg_motion_reason: str,
+        motion_passed: bool,
+        ml_alert: AlertLevel | None = None,
     ) -> FusionResult:
-        reasons: list[str] = []
-        if not window.protocol_ok:
-            reasons.extend(window.protocol_reasons)
-            return self._abstain(
-                STATUS_INCOMPLETE,
-                motion,
-                physio,
-                temperature,
-                reasons,
-            )
-        if motion.level is not SqiLevel.PASS:
-            reasons.append(motion.reason)
-            return self._abstain(
-                STATUS_INVALID,
-                motion,
-                physio,
-                temperature,
-                reasons,
-            )
-        if not physio.complete:
-            reasons.append("missing_hr_or_spo2_median")
-            return self._abstain(
-                STATUS_INVALID,
-                motion,
-                physio,
-                temperature,
-                reasons,
-            )
-        if self.require_temperature and temperature.missing:
-            reasons.append("temperature_required_but_missing")
-            return self._abstain(
-                STATUS_INVALID,
-                motion,
-                physio,
-                temperature,
-                reasons,
-            )
-
-        components = [physio.hr_score, physio.spo2_score]
-        assert physio.hr_score is not None and physio.spo2_score is not None
-        n = 2
-        temp_score = temperature.news2_score
-        if not temperature.missing and temp_score is not None:
-            components.append(temp_score)
-            n = 3
-        elif temperature.missing:
-            reasons.append("temperature_omitted_partial_subset")
-
-        total = int(sum(components))
-        warning = (
-            "subset_sum_only_not_full_NEWS2_do_not_apply_escalation_bands"
-        )
+        reasons = list(fall.reasons) + list(vitals.reasons)
+        rule = self._rule_alert(fall, vitals)
+        alert, source = escalate_with_ml(rule, ml_alert)
+        ppg_valid = vitals.decision is not VitalsDecision.INVALID
+        if fall.decision is FallDecision.FALL:
+            status = "fall_alert"
+        elif ppg_valid:
+            status = "scored"
+        elif fall.decision is FallDecision.IMU_UNRELIABLE and not ppg_valid:
+            status = "invalid_measurement"
+        else:
+            status = "invalid_measurement"
+        warning = vitals.warning
+        if fall.decision is FallDecision.FALL:
+            warning = "fall_alert_independent_of_ppg"
         return FusionResult(
-            status=STATUS_SCORED,
+            status=status,
             algorithm_version=ALGORITHM_VERSION,
-            subset_total=total,
-            max_subset=NEWS2_MAX_PER_VITAL * n,
-            n_components=n,
-            hr_score=physio.hr_score,
-            spo2_score=physio.spo2_score,
-            temp_score=temp_score if not temperature.missing else None,
-            sqi_level=motion.level.value,
-            motion_passed=True,
+            alert_level=alert.value,
+            alert_source=source,
+            tier=alert.value,
+            tier_source=source,
+            subset_total=vitals.subset_total,
+            max_component=vitals.max_component,
+            completeness=vitals.completeness,
+            n_components=vitals.n_components,
+            max_subset=vitals.max_subset,
+            hr_score=vitals.hr_score,
+            spo2_score=vitals.spo2_score,
+            temp_score=vitals.temp_score,
+            ppg_valid=ppg_valid,
+            fall_decision=fall.decision.value,
+            temp_status=temp_status,
+            sqi_level=ppg_motion_reason,
+            motion_passed=motion_passed,
             reasons=tuple(reasons),
             warning=warning,
         )
 
-    def _abstain(
-        self,
-        status: str,
-        motion: MotionGateResult,
-        physio: PhysioNews2Result,
-        temperature: TemperatureNews2Result,
-        reasons: list[str],
-    ) -> FusionResult:
-        return FusionResult(
-            status=status,
-            algorithm_version=ALGORITHM_VERSION,
-            subset_total=None,
-            max_subset=None,
-            n_components=0,
-            hr_score=physio.hr_score,
-            spo2_score=physio.spo2_score,
-            temp_score=temperature.news2_score,
-            sqi_level=motion.level.value,
-            motion_passed=motion.passed,
-            reasons=tuple(reasons),
-            warning="no_clinical_index_fail_closed",
-        )
+    def _rule_alert(
+        self, fall: FallPipelineResult, vitals: VitalsBranchResult
+    ) -> AlertLevel:
+        if fall.decision is FallDecision.FALL:
+            return AlertLevel.FALL_ALERT
+        if fall.decision is FallDecision.POSSIBLE_FALL:
+            if vitals.decision is VitalsDecision.URGENT:
+                return AlertLevel.VITAL_ALERT
+            return AlertLevel.CHECK_IN
+        if fall.decision is FallDecision.CANCELLED:
+            base = AlertLevel.CHECK_IN
+        else:
+            base = AlertLevel.OK
+
+        if vitals.decision is VitalsDecision.URGENT:
+            return AlertLevel.VITAL_ALERT
+        if vitals.decision is VitalsDecision.WATCH:
+            return AlertLevel.CHECK_IN
+        if vitals.decision is VitalsDecision.INVALID:
+            if fall.decision is FallDecision.IMU_UNRELIABLE:
+                return AlertLevel.SIGNAL_POOR
+            return AlertLevel.SIGNAL_POOR
+        if base is AlertLevel.CHECK_IN:
+            return AlertLevel.CHECK_IN
+        return AlertLevel.OK
+
+
+def escalate_with_ml(
+    rule_alert: AlertLevel, ml_alert: AlertLevel | None
+) -> tuple[AlertLevel, str]:
+    """ML may raise the alert of a scored session, never lower it."""
+    if (
+        ml_alert is None
+        or rule_alert is AlertLevel.SIGNAL_POOR
+        or ml_alert is AlertLevel.SIGNAL_POOR
+    ):
+        return rule_alert, "rule"
+    if ml_alert.rank > rule_alert.rank:
+        return ml_alert, "ml_escalated"
+    return rule_alert, "rule"

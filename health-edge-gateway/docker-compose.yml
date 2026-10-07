@@ -1,32 +1,78 @@
-version: '3.8'
+version: "3.8"
+
+# Edge microservices. Watch packets stay on MQTT; clinical logic is
+# split so ingest never scores and FL never sits on the alert path.
 
 services:
   local-mqtt:
     image: eclipse-mosquitto:2
-    platform: linux/amd64  #delete when run with the hardware
     ports:
       - "1883:1883"
     command: sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
 
-  ble-receiver:
+  ingest:
     build: .
-    platform: linux/amd64
-    command: python src/ble_receiver/ble_scanner.py
-    privileged: true
-    network_mode: host
+    command: python src/services/ingest_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
     depends_on:
       - local-mqtt
 
-  ml-inference:
+  fall:
     build: .
-    platform: linux/amd64
-    command: python src/ml_inference/inference_service.py
+    command: python src/services/fall_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
     depends_on:
-      - local-mqtt
+      - ingest
+
+  vitals:
+    build: .
+    command: python src/services/vitals_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
+    depends_on:
+      - ingest
+
+  fusion:
+    build: .
+    command: python src/services/fusion_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+      FUSION_SPLIT: "0"
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
+    depends_on:
+      - ingest
 
   fl-client:
     build: .
-    platform: linux/amd64
     command: python src/federated_learning/fl_client.py
-    depends_on:
-      - local-mqtt
+    environment:
+      PYTHONPATH: /app/src
+      FL_ONCE: "1"
+    volumes:
+      - ./.env:/app/.env:ro
+    profiles:
+      - cold
+
+volumes:
+  gateway-data:

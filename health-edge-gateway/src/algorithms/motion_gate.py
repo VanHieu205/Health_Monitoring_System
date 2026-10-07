@@ -1,4 +1,4 @@
-"""IMU signal-quality index (SQI) for the kiosk acquire window.
+"""IMU signal-quality index (SQI) for a seated PPG acquire window.
 
 PPG-derived HR/SpO2 is not trustworthy under motion artefact. This gate
 does **not** estimate disease risk.

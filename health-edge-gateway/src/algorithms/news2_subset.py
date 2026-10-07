@@ -1,4 +1,4 @@
-"""NEWS2 cut-points for vitals the kiosk can measure.
+"""NEWS2 cut-points for vitals the watch can measure in a seated PPG session.
 
 Source (must be cited in the thesis / IFU):
 
@@ -18,7 +18,9 @@ failure). Scale 2 is not selected automatically.
 
 from __future__ import annotations
 
-ALGORITHM_VERSION = "2.0.0-news2-subset"
+ALGORITHM_VERSION = "3.0.0-care-home-alert-fusion"
+FL_ARCHITECTURE_FALL = "arch.fall"
+FL_ARCHITECTURE_SQI = "arch.sqi"
 
 # Maximum NEWS2 points for one vital.
 NEWS2_MAX_PER_VITAL = 3
