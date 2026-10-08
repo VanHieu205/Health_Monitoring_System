@@ -18,17 +18,24 @@ SRC = Path(__file__).resolve().parents[1]
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from algorithms.news2_subset import FL_ARCHITECTURE_FALL, FL_ARCHITECTURE_SQI
+from algorithms.news2 import (
+    FL_ARCHITECTURE_SNN,
+    FL_ARCHITECTURE_SQI,
+    FL_ARCHITECTURE_TREND,
+)
 from common.config import load_gateway_env
 
 load_gateway_env()
 LOGGER = logging.getLogger("fl_client")
 
-ALLOWED = frozenset({FL_ARCHITECTURE_FALL, FL_ARCHITECTURE_SQI})
+ALLOWED = frozenset({FL_ARCHITECTURE_SNN, FL_ARCHITECTURE_SQI, FL_ARCHITECTURE_TREND})
 
 
 def allowed_architectures() -> tuple[str, ...]:
-    raw = os.getenv("FL_ARCHITECTURES", f"{FL_ARCHITECTURE_FALL},{FL_ARCHITECTURE_SQI}")
+    raw = os.getenv(
+        "FL_ARCHITECTURES",
+        f"{FL_ARCHITECTURE_SNN},{FL_ARCHITECTURE_SQI},{FL_ARCHITECTURE_TREND}",
+    )
     names = tuple(part.strip() for part in raw.split(",") if part.strip())
     bad = [name for name in names if name not in ALLOWED]
     if bad:
@@ -47,8 +54,8 @@ def main() -> None:
         "trains_on": "labeled IMU/PPG features at the Pi, never raw waveforms",
         "does_not_train": [
             "NEWS2 cut-points",
-            "fusion alert table",
-            "P_physio disease probability",
+            "NEWS2 risk bands",
+            "fusion max() rules",
         ],
         "status": "cold_path_idle_no_labeled_buffer",
     }

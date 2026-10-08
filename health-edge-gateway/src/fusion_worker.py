@@ -78,17 +78,15 @@ def run_once() -> SessionFusionReport:
     )
     snap = pipeline_from_env().evaluate(extractor.fetch())
     fused = snap.fused
-    scored = fused.alert_level in {"ok", "check_in", "vital_alert", "fall_alert"} and fused.ppg_valid
-    if fused.alert_level == "fall_alert":
-        scored = True
+    scored = True
     return SessionFusionReport(
         ok=scored,
         status=fused.status,
         algorithm_version=fused.algorithm_version,
         alert_level=fused.alert_level,
         alert_source=fused.alert_source,
-        fall_decision=snap.fall.decision.value,
-        vitals_decision=snap.vitals.decision.value,
+        fall_decision=snap.fall_confirm.decision.value,
+        vitals_decision=snap.news2.decision_name,
         n_samples=snap.window.n_samples,
         n_raw_fetched=snap.window.n_raw_fetched,
         duration_s=snap.window.duration_s,

@@ -1,7 +1,7 @@
 version: "3.8"
 
-# Edge microservices. Watch packets stay on MQTT; clinical logic is
-# split so ingest never scores and FL never sits on the alert path.
+# Hot-path microservices matching DACN_HuongTrienKhai.pdf Table 10.
+# allow_anonymous is lab-only.
 
 services:
   local-mqtt:
@@ -23,6 +23,32 @@ services:
     depends_on:
       - local-mqtt
 
+  signal-proc:
+    build: .
+    command: python src/services/signal_proc_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
+    depends_on:
+      - local-mqtt
+
+  news2:
+    build: .
+    command: python src/services/news2_service.py
+    environment:
+      PYTHONPATH: /app/src
+      MQTT_BROKER: local-mqtt
+      SQLITE_PATH: /app/data/local_buffer.db
+    volumes:
+      - gateway-data:/app/data
+      - ./.env:/app/.env:ro
+    depends_on:
+      - local-mqtt
+
   fall:
     build: .
     command: python src/services/fall_service.py
@@ -34,11 +60,11 @@ services:
       - gateway-data:/app/data
       - ./.env:/app/.env:ro
     depends_on:
-      - ingest
+      - local-mqtt
 
-  vitals:
+  trend:
     build: .
-    command: python src/services/vitals_service.py
+    command: python src/services/trend_service.py
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -47,7 +73,7 @@ services:
       - gateway-data:/app/data
       - ./.env:/app/.env:ro
     depends_on:
-      - ingest
+      - local-mqtt
 
   fusion:
     build: .
@@ -56,12 +82,11 @@ services:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
       SQLITE_PATH: /app/data/local_buffer.db
-      FUSION_SPLIT: "0"
     volumes:
       - gateway-data:/app/data
       - ./.env:/app/.env:ro
     depends_on:
-      - ingest
+      - local-mqtt
 
   fl-client:
     build: .

@@ -1,7 +1,7 @@
 """Load gateway settings from ``.env`` then process environment.
 
 Device/runtime values live in env. NEWS2 cut-points stay in
-``algorithms.news2_subset`` and are not configured here.
+``algorithms.news2`` and are not configured here.
 """
 
 from __future__ import annotations

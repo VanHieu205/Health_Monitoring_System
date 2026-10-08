@@ -6,7 +6,7 @@ does **not** estimate disease risk.
 Method
 ------
 1. Convert MPU-6050 LSBs to g using the configured full-scale sensitivity
-   (default ±2 g → 16384 LSB/g; must match firmware).
+   (default ±16 g → 2048 LSB/g; must match firmware).
 2. Remove the nearly-constant gravity/bias term by subtracting the
    per-axis mean over the acquire window (valid when the subject is
    seated and orientation is stable):
@@ -33,7 +33,8 @@ from typing import Sequence
 
 from algorithms.sliding_win import SessionWindow
 
-MPU6050_LSB_PER_G = 16384.0
+# MPU6050 ±16 g (AFS_SEL=3) so a 2.5 g impact threshold is reachable.
+MPU6050_LSB_PER_G = 2048.0
 # Pre-calibration defaults (replace after seated vs fidget ROC on-device).
 DEFAULT_RMS_PASS_G = 0.05
 DEFAULT_RMS_FAIL_G = 0.12
