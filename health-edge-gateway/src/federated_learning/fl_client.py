@@ -59,7 +59,43 @@ def main() -> None:
         ],
         "status": "cold_path_idle_no_labeled_buffer",
     }
-    LOGGER.info("%s", json.dumps(payload, indent=2))
+    if os.getenv("FL_TRAIN", "").strip() in {"1", "true", "yes"}:
+        from federated_learning.local_trainer import train_architecture
+        from federated_learning.model_diff_encoder import encode_update
+        from federated_learning.privacy_guard import check_update
+
+        import torch
+
+        reports = []
+        for arch in allowed_architectures():
+            report = train_architecture(
+                arch,
+                data_dir=os.getenv("FL_DATA_DIR") or None,
+                epochs=int(os.getenv("FL_EPOCHS", "8")),
+                n_subjects=int(os.getenv("FL_N_SUBJECTS", "8")),
+                tune=os.getenv("FL_TUNE", "1").strip() not in {"0", "false", "no"},
+            )
+            ckpt = torch.load(report["checkpoint"], map_location="cpu")
+            update = check_update(
+                encode_update(
+                    architecture=arch,
+                    state_dict=ckpt["state_dict"],
+                    n_samples=report["n_samples"],
+                    model_version=str(ckpt.get("hparams")),
+                )
+            )
+            reports.append(
+                {
+                    "architecture": arch,
+                    "source": report.get("source"),
+                    "test": report.get("test"),
+                    "n_samples": update["n_samples"],
+                    "update_bytes": len(json.dumps(update)),
+                }
+            )
+        payload["status"] = "local_train_complete_not_sent"
+        payload["reports"] = reports
+    LOGGER.info("%s", json.dumps(payload, indent=2, default=str))
     if os.getenv("FL_ONCE", "1").strip() in {"1", "true", "yes"}:
         return
     LOGGER.info("Set FL_ONCE=0 and provide labeled feature tables before looping rounds.")

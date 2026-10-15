@@ -19,7 +19,7 @@ def on_message(client, userdata, msg):
     data = decode_18byte_packet(hex_payload)
     
     if data:
-        print(f"\n[+] Nhận gói tin -> Nhịp tim: {data['hr']} bpm | SpO2: {data['spo2']}%")
+        print(f"\n[+] Packet -> HR: {data['hr']} bpm | SpO2: {data['spo2']}%")
         
         try:
             db = SessionLocal()
@@ -36,9 +36,9 @@ def on_message(client, userdata, msg):
             db.add(new_record)
             db.commit()
             db.close()
-            print("    [v] Đã lưu an toàn vào DB Cục bộ (SQLite)")
+            print("    [v] Saved to local SQLite")
         except Exception as e:
-            print(f"    [x] Lỗi khi lưu DB: {e}")
+            print(f"    [x] DB write failed: {e}")
 
 if __name__ == "__main__":
     client = mqtt.Client()
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         client.subscribe(TOPIC)
-        print(f"Đang lắng nghe dữ liệu từ Topic '{TOPIC}' và kết nối với SQLite...")
+        print(f"Listening on topic '{TOPIC}' and writing to SQLite...")
         client.loop_forever()
     except ConnectionRefusedError:
-        print("Lỗi: Không tìm thấy MQTT Broker.")
+        print("Error: MQTT broker not found.")

@@ -22,10 +22,16 @@ from algorithms.imu_fall_gate import ImuFallGateResult
 from algorithms.motion_gate import MPU6050_LSB_PER_G
 from algorithms.sliding_win import SessionWindow
 
-DEFAULT_SMV_IMPACT_G = 2.5
-DEFAULT_POSTURE_DEG = 35.0
+# LOSO median on WEDA: 3.0 g, 30°, at most 3 peaks at or above 2.5 g.
+DEFAULT_SMV_IMPACT_G = 3.0
+DEFAULT_POSTURE_DEG = 30.0
 DEFAULT_INACTIVITY_RMS_G = 0.08
 DEFAULT_INACTIVITY_TAIL = 0.4
+# WEDA cannot host a 10 s stillness test. A fall is one impact plus a turn;
+# repeated impacts (clap, run, hit) are rejected. Defaults match the
+# event-level tie-break in algorithms.fall_events.
+DEFAULT_MAX_PEAKS = 3
+DEFAULT_PEAK_FLOOR_G = 2.5
 
 
 class FallDecision(str, Enum):
@@ -63,6 +69,8 @@ class FallPipeline:
         smv_impact_g: float = DEFAULT_SMV_IMPACT_G,
         posture_deg: float = DEFAULT_POSTURE_DEG,
         inactivity_rms_g: float = DEFAULT_INACTIVITY_RMS_G,
+        max_peaks: int = DEFAULT_MAX_PEAKS,
+        peak_floor_g: float = DEFAULT_PEAK_FLOOR_G,
         tinyml: TinyMlFn | None = None,
     ) -> None:
         if lsb_per_g <= 0 or smv_impact_g <= 0:
@@ -71,6 +79,8 @@ class FallPipeline:
         self.smv_impact_g = smv_impact_g
         self.posture_deg = posture_deg
         self.inactivity_rms_g = inactivity_rms_g
+        self.max_peaks = max_peaks
+        self.peak_floor_g = peak_floor_g
         self.tinyml = tinyml
 
     def evaluate(
@@ -116,6 +126,8 @@ class FallPipeline:
         impact = peak >= self.smv_impact_g or window.watch_fall_candidate
         angle = _gravity_delta_deg(ax, ay, az)
         posture = angle is not None and angle >= self.posture_deg
+        groups = _impact_groups(smv, self.peak_floor_g)
+        isolated = posture and 1 <= groups <= self.max_peaks
         rms_post = _rms_dynamic_tail(ax, ay, az, peak_i)
         inactive = rms_post is not None and rms_post <= self.inactivity_rms_g
 
@@ -126,6 +138,8 @@ class FallPipeline:
             reasons.append(f"smv_peak:{peak:.2f}g")
         if posture:
             reasons.append(f"posture_delta:{angle:.1f}deg")
+        if isolated:
+            reasons.append(f"isolated_peaks:{groups}")
         if inactive:
             reasons.append(f"inactivity_rms:{rms_post:.3f}g")
 
@@ -141,7 +155,11 @@ class FallPipeline:
             if tinyml_label:
                 reasons.append(f"tinyml:{tinyml_label}")
 
-        if impact and inactive and (posture or window.watch_fall_candidate):
+        # Isolated impact confirms a fall. A watch candidate still needs the
+        # short-window stillness check, because the watch already ran its own detector.
+        if impact and isolated:
+            decision = FallDecision.FALL
+        elif impact and window.watch_fall_candidate and inactive:
             decision = FallDecision.FALL
         elif impact:
             decision = FallDecision.POSSIBLE_FALL
@@ -202,3 +220,17 @@ def _rms_dynamic_tail(
         dx, dy, dz = x - mx, y - my, z - mz
         energy += dx * dx + dy * dy + dz * dz
     return math.sqrt(energy / n)
+
+
+def _impact_groups(smv: Sequence[float], floor: float) -> int:
+    """Count separated runs of samples at or above ``floor``."""
+    groups = 0
+    active = False
+    for value in smv:
+        if value >= floor:
+            if not active:
+                groups += 1
+                active = True
+        else:
+            active = False
+    return groups
