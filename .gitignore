@@ -132,3 +132,8 @@ health-edge-gateway/data/**/*.csv
 
 # Accidental extra tree at repo root (code lives under health-edge-gateway/)
 /src/
+
+# Local docs (keep off the gateway branch)
+*.pdf
+health-edge-gateway/README.md
+health-edge-gateway/**/README.md
