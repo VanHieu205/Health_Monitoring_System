@@ -35,31 +35,31 @@ Theo PDF mục 3 và Bảng 10, gateway chịu trách nhiệm toàn bộ **đư�
 
 | # | Service | Trách nhiệm | Vị trí mã |
 |---|---------|-------------|-----------|
-| S1 | `ble_ingest` | Kết nối nhiều vòng đeo qua BLE, giải mã gói, loại trùng theo `seq`, sắp xếp theo `t_measured`, gắn `patient_id` theo bảng ghép thiết bị | `src/ble_receiver/*`, `src/services/ingest_service.py` |
-| S2 | `signal_proc` | HR từ IBI, SpO2 từ R, RR từ RIIV/RIAV/RIFV, nhiệt độ + Δcal; chạy mô hình SQI; áp cổng chất lượng | `src/algorithms/vitals_estimate.py`, `physio_rule.py`, `ppg_sqi.py`, `motion_gate.py`, `temp_rule.py`, `src/services/signal_proc_service.py` |
-| S3 | `manual_input` | Nhận tham số điều dưỡng nhập (HA, ACVPU, oxy, RR, nhiệt, Scale 2), quản lý thời hạn hiệu lực Θ | `src/services/news2_service.py` (phần `gateway/manual`), bảng `manual_vitals` |
-| S4 | `branch_news2` | Chọn giá trị theo Bảng 8, tính `S`, `S_max`, `C`, `L_news`, cờ `needs_confirmation` | `src/algorithms/news2.py`, `news2_branch.py`, `src/services/news2_service.py` |
-| S5 | `branch_fall` | Cửa sổ 30 s sau `FALL_CANDIDATE`: xác nhận / tự hủy / hủy nút; mất gói → xác nhận | `src/algorithms/fall_confirm.py`, `src/services/fall_service.py` |
-| S6 | `branch_trend` | MLP xu hướng 2 giờ → `p_det` → `L_trend ≤ 2` | `src/algorithms/trend_branch.py`, `src/services/trend_service.py`, `src/ml_inference/*` |
-| S7 | `fusion` | `L = max(L_news, L_fall, L_trend)`, chống nhấp nháy, truy vết, vòng đời cảnh báo | `src/algorithms/fusion.py`, `src/services/fusion_service.py` |
+| S1 | `ble_ingest` | Kết nối nhiều vòng đeo qua BLE, giải mã gói, loại trùng theo `seq`, sắp xếp theo `t_measured`, gắn `patient_id` theo bảng ghép thiết bị | `src/ingress/*`, `src/services/ingest` |
+| S2 | `signal_proc` | HR từ IBI, SpO2 từ R, RR từ RIIV/RIAV/RIFV, nhiệt độ + Δcal; chạy mô hình SQI; áp cổng chất lượng | `src/domain/vitals_estimate.py`, `physio_rule.py`, `ppg_sqi.py`, `motion_gate.py`, `temp_rule.py`, `src/services/signal` |
+| S3 | `manual_input` | Nhận tham số điều dưỡng nhập (HA, ACVPU, oxy, RR, nhiệt, Scale 2), quản lý thời hạn hiệu lực Θ | `src/services/news2` (phần `gateway/manual`), bảng `manual_vitals` |
+| S4 | `branch_news2` | Chọn giá trị theo Bảng 8, tính `S`, `S_max`, `C`, `L_news`, cờ `needs_confirmation` | `src/domain/news2.py`, `news2_branch.py`, `src/services/news2` |
+| S5 | `branch_fall` | Cửa sổ 30 s sau `FALL_CANDIDATE`: xác nhận / tự hủy / hủy nút; mất gói → xác nhận | `src/domain/fall_confirm.py`, `src/services/fall` |
+| S6 | `branch_trend` | MLP xu hướng 2 giờ → `p_det` → `L_trend ≤ 2` | `src/domain/trend_branch.py`, `src/services/trend`, `src/ml_inference/*` |
+| S7 | `fusion` | `L = max(L_news, L_fall, L_trend)`, chống nhấp nháy, truy vết, vòng đời cảnh báo | `src/domain/fusion.py`, `src/services/fusion` |
 | S8 | `local_alert` | Đèn/còi tại quầy, màn hình cục bộ khi `L ≥ 2`, kể cả mất mạng | `gateway/local_alarm` (topic), chưa có process riêng |
-| S9 | `cloud_sync` | Đẩy kết quả lên cloud theo hàng đợi, retry + backoff; nhận lệnh và tham số nhập tay từ cloud | `src/local_storage/sync_worker.py` |
-| S10 | `fl_client` | Huấn luyện cục bộ 3 mô hình, gửi cập nhật, nhận mô hình toàn cục | `src/federated_learning/*` |
+| S9 | `cloud_sync` | Đẩy kết quả lên cloud theo hàng đợi, retry + backoff; nhận lệnh và tham số nhập tay từ cloud | `src/persistence/sync_worker.py` |
+| S10 | `fl_client` | Huấn luyện cục bộ 3 mô hình, gửi cập nhật, nhận mô hình toàn cục | `src/learning/*` |
 | S11 | `ota_agent` | Phân phối firmware và trọng số SNN xuống vòng đeo; rollback | `src/ota_manager/*` |
 
 ### 1.2. Trách nhiệm xuyên suốt (không có trong Bảng 10 nhưng gateway phải làm)
 
 | # | Trách nhiệm | Nội dung | Vị trí mã |
 |---|-------------|----------|-----------|
-| X1 | Hợp đồng bản tin | Schema JSON có phiên bản cho mọi topic watch → Pi và Pi nội bộ | `src/common/envelope.py`, `src/common/topics.py`, `health-shared-contracts/mqtt-json/` |
-| X2 | Lưu trữ cục bộ | SQLite WAL, sở hữu bảng theo service, khôi phục trạng thái sau khởi động lại, dọn dữ liệu cũ | `src/local_storage/db_models.py` |
+| X1 | Hợp đồng bản tin | Schema JSON có phiên bản cho mọi topic watch → Pi và Pi nội bộ | `src/contracts/envelope.py`, `src/contracts/topics.py`, `health-shared-contracts/mqtt-json/` |
+| X2 | Lưu trữ cục bộ | SQLite WAL, sở hữu bảng theo service, khôi phục trạng thái sau khởi động lại, dọn dữ liệu cũ | `src/persistence/db_models.py` |
 | X3 | Ghép thiết bị – người bệnh | `device_id` ↔ `patient_id` (giả danh), hiệu chuẩn nhiệt độ theo người | chưa có bảng |
 | X4 | Lệnh xuống vòng đeo | Khi `L ≥ 2`: lệnh escalate PPG liên tục (PDF 4.2); lệnh đo theo yêu cầu | chưa có topic |
-| X5 | Kênh trạng thái kỹ thuật | `device_ok/signal_poor/disconnected/battery_low/not_worn`, watchdog heartbeat | `src/algorithms/device_status.py` |
+| X5 | Kênh trạng thái kỹ thuật | `device_ok/signal_poor/disconnected/battery_low/not_worn`, watchdog heartbeat | `src/domain/device_status.py` |
 | X6 | Bảo mật | BLE LE Secure Connections, MQTT xác thực + TLS, chứng chỉ Pi, không lộ danh tính | `mosquitto.conf` (gốc repo) |
-| X7 | Quan sát hệ thống | Log có cấu trúc, metrics (độ trễ, số gói, tỉ lệ loại phiên), health check | `src/common/logger.py`, `metrics.py`, `src/api/health_check.py` |
+| X7 | Quan sát hệ thống | Log có cấu trúc, metrics (độ trễ, số gói, tỉ lệ loại phiên), health check | `src/runtime/logger.py`, `metrics.py`, `src/api/health_check.py` |
 | X8 | Triển khai | Docker Compose (dev) và systemd/restart policy (Pi), cấu hình `.env` | `docker-compose.yml`, `Dockerfile`, `.env.example` |
-| X9 | Mô phỏng và dữ liệu thử | Simulator phát đủ loại gói và kịch bản lâm sàng | `tools/ble_packet_simulator.py` |
+| X9 | Mô phỏng và dữ liệu thử | Simulator phát đủ loại gói và kịch bản lâm sàng | `scripts/ingress/ble_packet_simulator.py` |
 | X10 | Kiểm thử và đánh giá | Kiểm thử biên NEWS2, kịch bản fusion, chạy dài, đo độ trễ | `scripts/verify_*.py` |
 
 ---
@@ -247,26 +247,26 @@ Danh sách dưới đây là việc phải làm, gắn vào checklist tuần. Kh
 
 | # | Vị trí | Vấn đề cần xử lý | Chủ | Tuần |
 |---|--------|------------------|-----|------|
-| 1 | `src/ble_receiver/ble_scanner.py`, `connection_pool.py`, `mqtt_publisher.py` | File khung rỗng; cần BLE central thật bằng `bleak` | TV1 | 3, 9 |
-| 2 | `src/services/ingest_service.py` | Chưa phát hiện mất `seq`, chưa sắp theo `t_measured`, chưa gắn `patient_id` | TV1 | 3–4 |
-| 3 | `src/ble_receiver/packet_decoder.py`, `mqtt_subscriber.py` | Đường gói 18 byte cũ; quyết định giữ cho simulator hay bỏ | TV1 | 2 |
-| 4 | `src/services/signal_proc_service.py` | Hệ số SpO2 là giá trị khởi tạo; thiếu kiểm DC_IR, thiếu Δcal nhiệt theo người, thiếu mô hình SQI | TV1 | 4–5, 12 |
-| 5 | `src/services/news2_service.py` | Nhập tay đang nằm chung; Θ đang lấy `s`/`s_max` từ gói nhập tay thay vì kết quả NEWS2 gần nhất; trạng thái chỉ trong RAM | TV2 | 5–6 |
-| 6 | `src/services/fall_service.py` | Xác nhận chỉ chạy khi có gói đến → mất hết gói thì không bao giờ xác nhận; cần bộ hẹn giờ; trạng thái trong RAM | TV2 | 6 |
-| 7 | `src/services/trend_service.py` | Chưa có mô hình tính `p_det`; chưa có trích đặc trưng 2 giờ | TV2, TV3 | 8, 10 |
-| 8 | `src/services/fusion_service.py` | Tuổi heartbeat luôn = 0 (không bao giờ ra `disconnected`); logic cập nhật hysteresis cần rà và kiểm thử; quyết định nhánh quá hạn chưa xử lý; trạng thái trong RAM | TV2 | 7 |
+| 1 | `src/ingress/ble_scanner.py`, `connection_pool.py`, `mqtt_publisher.py` | File khung rỗng; cần BLE central thật bằng `bleak` | TV1 | 3, 9 |
+| 2 | `src/services/ingest` | Chưa phát hiện mất `seq`, chưa sắp theo `t_measured`, chưa gắn `patient_id` | TV1 | 3–4 |
+| 3 | `src/ingress/packet_decoder.py`, `mqtt_subscriber.py` | Đường gói 18 byte cũ; quyết định giữ cho simulator hay bỏ | TV1 | 2 |
+| 4 | `src/services/signal` | Hệ số SpO2 là giá trị khởi tạo; thiếu kiểm DC_IR, thiếu Δcal nhiệt theo người, thiếu mô hình SQI | TV1 | 4–5, 12 |
+| 5 | `src/services/news2` | Nhập tay đang nằm chung; Θ đang lấy `s`/`s_max` từ gói nhập tay thay vì kết quả NEWS2 gần nhất; trạng thái chỉ trong RAM | TV2 | 5–6 |
+| 6 | `src/services/fall` | Xác nhận chỉ chạy khi có gói đến → mất hết gói thì không bao giờ xác nhận; cần bộ hẹn giờ; trạng thái trong RAM | TV2 | 6 |
+| 7 | `src/services/trend` | Chưa có mô hình tính `p_det`; chưa có trích đặc trưng 2 giờ | TV2, TV3 | 8, 10 |
+| 8 | `src/services/fusion` | Tuổi heartbeat luôn = 0 (không bao giờ ra `disconnected`); logic cập nhật hysteresis cần rà và kiểm thử; quyết định nhánh quá hạn chưa xử lý; trạng thái trong RAM | TV2 | 7 |
 | 9 | `src/services/bus.py` | Mở kết nối MQTT mới cho mỗi lần publish; cần client dài hạn, QoS 1, retain cho trạng thái | TV3 | 3 |
 | 10 | `local_alert` | Chưa có process GPIO / màn hình cục bộ | TV2 | 7–8 |
-| 11 | `src/local_storage/sync_worker.py` | File khung rỗng | TV3 | 8 |
-| 12 | `src/federated_learning/local_trainer.py`, `model_diff_encoder.py`, `privacy_guard.py` | File khung rỗng; `fl_client.py` mới là hợp đồng, chưa huấn luyện | TV3 | 9–11 |
+| 11 | `src/persistence/sync_worker.py` | File khung rỗng | TV3 | 8 |
+| 12 | `src/learning/local_trainer.py`, `model_diff_encoder.py`, `privacy_guard.py` | File khung rỗng; `fl_client.py` mới là hợp đồng, chưa huấn luyện | TV3 | 9–11 |
 | 13 | `src/ota_manager/esp32_model_pusher.py`, `k3s_image_updater.py` | File khung rỗng; `k3s_image_updater` có thể bỏ nếu không dùng k3s | TV3 | 11 |
-| 14 | `src/common/logger.py`, `metrics.py`, `src/api/health_check.py` | File khung rỗng | TV3 | 4 |
+| 14 | `src/runtime/logger.py`, `metrics.py`, `src/api/health_check.py` | File khung rỗng | TV3 | 4 |
 | 15 | `src/api/grpc_server.py`, `Dockerfile` | `CMD` trỏ gRPC server không dùng; Poetry + phụ thuộc cần khớp (`paho-mqtt`, `sqlalchemy`, `bleak`…) | TV3 | 2 |
 | 16 | `src/ml_inference/*` | PatchTST/Informer cũ, file rỗng; quyết định xóa hay dùng làm khung cho MLP trend | TV3 | 1 |
-| 17 | `src/fusion_worker.py`, `src/pipeline/session_pipeline.py`, `sliding_win.py` | Đường lab đọc cửa sổ SQLite cũ; giữ làm công cụ thử nghiệm, không chạy trên đường nóng thật | TV2 | 7 |
-| 18 | `scripts/verify_news2.py`, `verify_alert_fusion.py` | Chuyển thành `pytest`, mở rộng biên đủ Bảng 6–7 | TV2 | 5 |
+| 17 | `src/application/lab_worker.py`, `src/application/session_pipeline.py`, `sliding_win.py` | Đường lab đọc cửa sổ SQLite cũ; giữ làm công cụ thử nghiệm, không chạy trên đường nóng thật | TV2 | 7 |
+| 18 | `scripts/clinical/verify_news2.py`, `verify_alert_fusion.py` | Chuyển thành `pytest`, mở rộng biên đủ Bảng 6–7 | TV2 | 5 |
 | 19 | `mosquitto.conf`, `docker-compose.yml` | `allow_anonymous true` chỉ cho lab | TV3 | 8 |
-| 20 | `tools/ble_packet_simulator.py` | Chỉ phát gói 18 byte; cần phát đủ loại gói JSON và kịch bản | TV1 | 2–3 |
+| 20 | `scripts/ingress/ble_packet_simulator.py` | Chỉ phát gói 18 byte; cần phát đủ loại gói JSON và kịch bản | TV1 | 2–3 |
 
 ---
 
@@ -301,7 +301,7 @@ Mục tiêu: cả nhóm hiểu cùng một kiến trúc, môi trường chạy �
 - **TV1**
   - [ ] Viết JSON Schema cho `heartbeat`, `motion`, `ppg_session`, `temp`, `fall_candidate`, `button` và topic nội bộ.
   - [ ] Cập nhật `health-shared-contracts/mqtt-json/README.md` theo schema.
-  - [ ] Viết lại `tools/ble_packet_simulator.py`: nhiều thiết bị, đủ loại gói, `seq` tăng dần.
+  - [ ] Viết lại `scripts/ingress/ble_packet_simulator.py`: nhiều thiết bị, đủ loại gói, `seq` tăng dần.
   - [ ] Quyết định giữ/bỏ đường gói 18 byte.
 - **TV2**
   - [ ] Định nghĩa schema topic quyết định: `news2/decision`, `fall/decision`, `trend/decision`, `alert`, `ack`, `manual`, `cmd`.
@@ -322,7 +322,7 @@ Mục tiêu: cả nhóm hiểu cùng một kiến trúc, môi trường chạy �
   - [ ] Kiểm thử: gói trùng, gói sai schema, gói đến muộn.
 - **TV2**
   - [ ] Bộ kiểm thử `pytest` cho bảng điểm NEWS2 tất cả giá trị biên.
-  - [ ] Rà `src/algorithms/news2.py` so từng ô với PDF Bảng 6–7.
+  - [ ] Rà `src/domain/news2.py` so từng ô với PDF Bảng 6–7.
 - **TV3**
   - [ ] Thay `bus.py` bằng client MQTT dài hạn, QoS 1, tự kết nối lại.
   - [ ] Bật WAL, viết lớp truy cập DB dùng chung, migration đơn giản.

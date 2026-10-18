@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trend
+  namespace: health-edge
+  labels:
+    app: trend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trend
+  template:
+    metadata:
+      labels:
+        app: trend
+    spec:
+      containers:
+        - name: trend
+          image: health-edge-gateway:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.trend"]
+          envFrom:
+            - configMapRef:
+                name: edge-config
+          volumeMounts:
+            - name: gateway-data
+              mountPath: /app/data
+      volumes:
+        - name: gateway-data
+          persistentVolumeClaim:
+            claimName: gateway-data

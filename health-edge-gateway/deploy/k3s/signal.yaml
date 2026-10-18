@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signal
+  namespace: health-edge
+  labels:
+    app: signal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: signal
+  template:
+    metadata:
+      labels:
+        app: signal
+    spec:
+      containers:
+        - name: signal
+          image: health-edge-gateway:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.signal"]
+          envFrom:
+            - configMapRef:
+                name: edge-config
+          volumeMounts:
+            - name: gateway-data
+              mountPath: /app/data
+      volumes:
+        - name: gateway-data
+          persistentVolumeClaim:
+            claimName: gateway-data

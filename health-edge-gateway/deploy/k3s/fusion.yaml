@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fusion
+  namespace: health-edge
+  labels:
+    app: fusion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fusion
+  template:
+    metadata:
+      labels:
+        app: fusion
+    spec:
+      containers:
+        - name: fusion
+          image: health-edge-gateway:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.fusion"]
+          envFrom:
+            - configMapRef:
+                name: edge-config
+          volumeMounts:
+            - name: gateway-data
+              mountPath: /app/data
+      volumes:
+        - name: gateway-data
+          persistentVolumeClaim:
+            claimName: gateway-data

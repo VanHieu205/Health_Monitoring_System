@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news2
+  namespace: health-edge
+  labels:
+    app: news2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news2
+  template:
+    metadata:
+      labels:
+        app: news2
+    spec:
+      containers:
+        - name: news2
+          image: health-edge-gateway:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.news2"]
+          envFrom:
+            - configMapRef:
+                name: edge-config
+          volumeMounts:
+            - name: gateway-data
+              mountPath: /app/data
+      volumes:
+        - name: gateway-data
+          persistentVolumeClaim:
+            claimName: gateway-data

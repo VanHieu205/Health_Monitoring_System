@@ -1,0 +1,131 @@
+{
+  "architecture": "arch.trend",
+  "source": "synthetic_mimic_like",
+  "eda": {
+    "source": "synthetic_mimic_like",
+    "n_windows": 40,
+    "n_subjects": 5,
+    "n_rise": 9,
+    "n_stable": 31,
+    "positive_rate": 0.225,
+    "l_news_now_hist": {
+      "1": 27,
+      "2": 9,
+      "3": 4
+    },
+    "feature_means": {
+      "hr_median": 82.19929504394531,
+      "hr_slope": 2.5924267768859863,
+      "hr_std": 6.669632911682129,
+      "spo2_median": 95.6648941040039,
+      "spo2_slope": -0.462050199508667,
+      "spo2_std": 1.1364185810089111,
+      "rr_median": 16.913619995117188,
+      "rr_slope": 0.4505467414855957,
+      "rr_std": 1.322338581085205,
+      "temp_median": 36.90985107421875,
+      "temp_slope": 0.05740761756896973,
+      "temp_std": 0.15186920762062073,
+      "l_news": 1.4249999523162842
+    },
+    "notes": [
+      "Self-label: L_news(t+2h) > L_news(t). Positive cases are usually rare.",
+      "MIMIC is ICU bedside \u2014 domain shift vs a wristband; Hybrid FL is a proof of concept."
+    ]
+  },
+  "split": {
+    "n_train": 24,
+    "n_val": 8,
+    "n_test": 8,
+    "subjects_train": [
+      "S00",
+      "S01",
+      "S03"
+    ],
+    "subjects_val": [
+      "S04"
+    ],
+    "subjects_test": [
+      "S02"
+    ],
+    "rule": "split_by_subject_no_window_leakage"
+  },
+  "tune": {
+    "best": {
+      "hidden": [
+        32,
+        16
+      ],
+      "lr": 0.001
+    },
+    "trials": []
+  },
+  "threshold": 0.5,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.0750221014022827,
+      "val_accuracy": 0.25,
+      "val_auroc": 0.75,
+      "val_f1_positive": 0.4,
+      "val_scores": [
+        0.5053250193595886,
+        0.5062678456306458,
+        0.5055621266365051,
+        0.5067136287689209,
+        0.5130968689918518,
+        0.5240957140922546,
+        0.527646541595459,
+        0.5270634293556213
+      ]
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0807987451553345,
+      "val_accuracy": 0.375,
+      "val_auroc": 0.8333333333333334,
+      "val_f1_positive": 0.4444444444444445,
+      "val_scores": [
+        0.4991756081581116,
+        0.5006833076477051,
+        0.5028596520423889,
+        0.5054053068161011,
+        0.5128569602966309,
+        0.5252993702888489,
+        0.5300541520118713,
+        0.5301972031593323
+      ]
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.0632587671279907,
+      "val_accuracy": 0.5,
+      "val_auroc": 0.8333333333333334,
+      "val_f1_positive": 0.5,
+      "val_scores": [
+        0.4929618835449219,
+        0.4950188994407654,
+        0.5000710487365723,
+        0.503993034362793,
+        0.5125498175621033,
+        0.526322066783905,
+        0.5323518514633179,
+        0.5332397222518921
+      ]
+    }
+  ],
+  "test": {
+    "auroc": 0.6666666666666666,
+    "auprc": 0.29166666666666663,
+    "f1_rise": 0.5714285714285715,
+    "tau_det": 0.5,
+    "max_l_trend": 2,
+    "l_trend_never_emergency": true,
+    "n_test": 8,
+    "positive_rate": 0.25
+  },
+  "checkpoint": "artifacts\\fl_smoke\\arch_trend\\model.pt",
+  "n_samples": 24,
+  "algorithm_version": "4.0.0-hospital-news2",
+  "generated_at": "2026-10-11T14:00:59.209677+00:00"
+}

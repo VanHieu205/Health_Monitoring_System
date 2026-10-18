@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fall
+  namespace: health-edge
+  labels:
+    app: fall
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fall
+  template:
+    metadata:
+      labels:
+        app: fall
+    spec:
+      containers:
+        - name: fall
+          image: health-edge-gateway:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.fall"]
+          envFrom:
+            - configMapRef:
+                name: edge-config
+          volumeMounts:
+            - name: gateway-data
+              mountPath: /app/data
+      volumes:
+        - name: gateway-data
+          persistentVolumeClaim:
+            claimName: gateway-data

@@ -1,0 +1,158 @@
+{
+  "architecture": "arch.snn",
+  "source": "weda_fall",
+  "eda": {
+    "source": "weda_fall",
+    "n_windows": 8393,
+    "n_subjects": 25,
+    "class_counts": {
+      "sit_stand": 1618,
+      "walk": 5548,
+      "fall_like": 1227
+    },
+    "imbalance_ratio": 4.52159739201304,
+    "per_class": {
+      "sit_stand": {
+        "n": 1618,
+        "smv_peak_mean": 1.4961649179458618,
+        "smv_peak_p95": 2.5357120037078857
+      },
+      "walk": {
+        "n": 5548,
+        "smv_peak_mean": 2.1222712993621826,
+        "smv_peak_p95": 4.470596790313721
+      },
+      "fall_like": {
+        "n": 1227,
+        "smv_peak_mean": 3.7289819717407227,
+        "smv_peak_p95": 6.1336541175842285
+      }
+    },
+    "notes": [
+      "2 s windows on a uniform 50 Hz grid; split by subject, young/elder stratified for WEDA ids.",
+      "Accel stored in g. Gyro stored in deg/s (WEDA rad/s \u00d7 180/\u03c0).",
+      "fall_like requires \u226550% overlap with the annotated interval, or the trial SMV peak inside that interval.",
+      "Training head is sit_stand, walk, fall_like. rest and not_worn are omitted."
+    ]
+  },
+  "split": {
+    "n_train": 5591,
+    "n_val": 1234,
+    "n_test": 1568,
+    "subjects_train": [
+      "U02",
+      "U07",
+      "U08",
+      "U09",
+      "U10",
+      "U11",
+      "U12",
+      "U13",
+      "U14",
+      "U21",
+      "U22",
+      "U23",
+      "U24",
+      "U27",
+      "U28",
+      "U29",
+      "U31"
+    ],
+    "subjects_val": [
+      "U05",
+      "U06",
+      "U30"
+    ],
+    "subjects_test": [
+      "U01",
+      "U03",
+      "U04",
+      "U25",
+      "U26"
+    ],
+    "rule": "split_by_subject_no_window_leakage"
+  },
+  "tune": {
+    "best": {
+      "lr": 0.001,
+      "beta": 0.9
+    },
+    "trials": []
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 29.448269715613616,
+      "val_accuracy": 0.5218800648298217,
+      "val_f1_macro": 0.48325333584872104,
+      "val_f1_per_class": [
+        0.48997134670487097,
+        0.5976833976833976,
+        0.3621052631578947
+      ],
+      "val_sensitivity_fall_like": 0.48314606741573035
+    },
+    {
+      "epoch": 2,
+      "train_loss": 15.083133259477993,
+      "val_accuracy": 0.506482982171799,
+      "val_f1_macro": 0.4775781244781065,
+      "val_f1_per_class": [
+        0.4651810584958217,
+        0.5748407643312102,
+        0.3927125506072875
+      ],
+      "val_sensitivity_fall_like": 0.5449438202247191
+    },
+    {
+      "epoch": 3,
+      "train_loss": 12.115044721826163,
+      "val_accuracy": 0.49432739059967584,
+      "val_f1_macro": 0.46749906570101896,
+      "val_f1_per_class": [
+        0.46921797004991683,
+        0.5748792270531401,
+        0.3584
+      ],
+      "val_sensitivity_fall_like": 0.6292134831460674
+    }
+  ],
+  "test": {
+    "accuracy": 0.5331632653061225,
+    "f1_macro": 0.4928445592836012,
+    "f1_per_class": [
+      0.4676616915422886,
+      0.6328815556865056,
+      0.37799043062200954
+    ],
+    "sensitivity_fall_like": 0.6245059288537549,
+    "confusion": [
+      [
+        141,
+        92,
+        85
+      ],
+      [
+        120,
+        537,
+        340
+      ],
+      [
+        24,
+        71,
+        158
+      ]
+    ],
+    "classes": [
+      "sit_stand",
+      "walk",
+      "fall_like"
+    ],
+    "n_test": 1568,
+    "fall_tau": 0.49999999999999994
+  },
+  "checkpoint": "artifacts\\fl_smoke\\arch_snn\\model.pt",
+  "n_samples": 5591,
+  "algorithm_version": "4.0.0-hospital-news2",
+  "generated_at": "2026-10-11T14:00:59.061261+00:00"
+}

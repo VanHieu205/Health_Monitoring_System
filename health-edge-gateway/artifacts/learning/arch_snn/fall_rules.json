@@ -1,0 +1,314 @@
+{
+  "seed": 42,
+  "subjects": {
+    "train": [
+      "U02",
+      "U03",
+      "U05",
+      "U06",
+      "U09",
+      "U11",
+      "U12",
+      "U13",
+      "U14",
+      "U22",
+      "U23",
+      "U24",
+      "U26",
+      "U27",
+      "U29",
+      "U30",
+      "U31"
+    ],
+    "val": [
+      "U01",
+      "U04",
+      "U25"
+    ],
+    "test": [
+      "U07",
+      "U08",
+      "U10",
+      "U21",
+      "U28"
+    ]
+  },
+  "cancel_window": "not_applied",
+  "rule": "isolated_peak: SMV peak, posture change, and at most N other impacts within \u00b13 s. Ten-second inactivity is not used: WEDA files end too soon and the wrist stays above 0.08 g.",
+  "selection": "LOSO chooses thresholds on every subject except the one being scored. The seed-42 rows use train+val only. Prefer Se>=0.90, then the lowest false alarms per ADL trial.",
+  "loso": {
+    "protocol": "leave_one_subject_out",
+    "n_subjects": 25,
+    "smv_only": {
+      "n_fall": 350,
+      "n_fall_detected": 322,
+      "sensitivity": 0.92,
+      "sensitivity_ci95": [
+        0.8868070101047589,
+        0.9440732481803042
+      ],
+      "n_adl": 619,
+      "n_false_alarms": 190,
+      "false_alarms_per_adl_trial": 0.3069466882067851,
+      "specificity": 0.6930533117932148,
+      "far_per_resident_day_mean": 2082.3664063887613,
+      "threshold_median": {
+        "smv_g": 3.5
+      }
+    },
+    "isolated_peak": {
+      "n_fall": 350,
+      "n_fall_detected": 312,
+      "sensitivity": 0.8914285714285715,
+      "sensitivity_ci95": [
+        0.8544860196983739,
+        0.9198717720366849
+      ],
+      "n_adl": 619,
+      "n_false_alarms": 79,
+      "false_alarms_per_adl_trial": 0.12762520193861066,
+      "specificity": 0.8723747980613893,
+      "far_per_resident_day_mean": 696.8128564369094,
+      "threshold_median": {
+        "smv_g": 3.0,
+        "posture_deg": 30.0,
+        "max_peaks": 3,
+        "peak_floor_g": 2.5
+      }
+    }
+  },
+  "holdout": [
+    {
+      "name": "smv_only",
+      "thresholds": {
+        "name": "smv_only",
+        "smv_g": 3.5
+      },
+      "constraint_met_on_train_val": true,
+      "train_val": {
+        "n_fall": 275,
+        "n_fall_detected": 252,
+        "sensitivity": 0.9163636363636364,
+        "sensitivity_ci95": [
+          0.8776305509799323,
+          0.9436242402707278
+        ],
+        "n_adl": 492,
+        "n_false_alarms": 148,
+        "false_alarms_per_adl_trial": 0.3008130081300813,
+        "specificity": 0.6991869918699187,
+        "adl_hours": 1.7364722222222222,
+        "far_per_resident_day": 2039.7459564037351,
+        "far_per_day_note": "Extrapolated from scripted WEDA clips, not a free-living day. The cancel window is not applied."
+      },
+      "test": {
+        "n_fall": 75,
+        "n_fall_detected": 70,
+        "sensitivity": 0.9333333333333333,
+        "sensitivity_ci95": [
+          0.8532474983062438,
+          0.9711903619096828
+        ],
+        "n_adl": 127,
+        "n_false_alarms": 42,
+        "false_alarms_per_adl_trial": 0.33070866141732286,
+        "specificity": 0.6692913385826772,
+        "adl_hours": 0.5054222222222222,
+        "far_per_resident_day": 2252.848206328868,
+        "far_per_day_note": "Extrapolated from scripted WEDA clips, not a free-living day. The cancel window is not applied.",
+        "per_subject": {
+          "U07": {
+            "n_fall": 25,
+            "n_fall_detected": 23,
+            "n_adl": 33,
+            "n_false_alarms": 11,
+            "adl_hours": 0.13394999999999999,
+            "far_per_day": 1970.8846584546477
+          },
+          "U08": {
+            "n_fall": 25,
+            "n_fall_detected": 24,
+            "n_adl": 33,
+            "n_false_alarms": 8,
+            "adl_hours": 0.15300000000000002,
+            "far_per_day": 1254.9019607843136
+          },
+          "U10": {
+            "n_fall": 25,
+            "n_fall_detected": 23,
+            "n_adl": 33,
+            "n_false_alarms": 12,
+            "adl_hours": 0.12566111111111114,
+            "far_per_day": 2291.8785092179137
+          },
+          "U21": {
+            "n_fall": 0,
+            "n_fall_detected": 0,
+            "n_adl": 12,
+            "n_false_alarms": 6,
+            "adl_hours": 0.043399999999999994,
+            "far_per_day": 3317.972350230415
+          },
+          "U28": {
+            "n_fall": 0,
+            "n_fall_detected": 0,
+            "n_adl": 16,
+            "n_false_alarms": 5,
+            "adl_hours": 0.04941111111111112,
+            "far_per_day": 2428.6035529570495
+          }
+        }
+      }
+    },
+    {
+      "name": "isolated_peak",
+      "thresholds": {
+        "name": "isolated_peak",
+        "smv_g": 3.0,
+        "posture_deg": 30.0,
+        "max_peaks": 3,
+        "peak_floor_g": 2.5
+      },
+      "constraint_met_on_train_val": true,
+      "train_val": {
+        "n_fall": 275,
+        "n_fall_detected": 249,
+        "sensitivity": 0.9054545454545454,
+        "sensitivity_ci95": [
+          0.8650748517956687,
+          0.9346623466711311
+        ],
+        "n_adl": 492,
+        "n_false_alarms": 49,
+        "false_alarms_per_adl_trial": 0.09959349593495935,
+        "specificity": 0.9004065040650406,
+        "adl_hours": 1.7364722222222222,
+        "far_per_resident_day": 534.3704551090242,
+        "far_per_day_note": "Extrapolated from scripted WEDA clips, not a free-living day. The cancel window is not applied."
+      },
+      "test": {
+        "n_fall": 75,
+        "n_fall_detected": 67,
+        "sensitivity": 0.8933333333333333,
+        "sensitivity_ci95": [
+          0.8033843735268642,
+          0.9449515303614384
+        ],
+        "n_adl": 127,
+        "n_false_alarms": 19,
+        "false_alarms_per_adl_trial": 0.14960629921259844,
+        "specificity": 0.8503937007874016,
+        "adl_hours": 0.5054222222222222,
+        "far_per_resident_day": 944.6781869625349,
+        "far_per_day_note": "Extrapolated from scripted WEDA clips, not a free-living day. The cancel window is not applied.",
+        "per_subject": {
+          "U07": {
+            "n_fall": 25,
+            "n_fall_detected": 20,
+            "n_adl": 33,
+            "n_false_alarms": 4,
+            "adl_hours": 0.13394999999999999,
+            "far_per_day": 716.6853303471446
+          },
+          "U08": {
+            "n_fall": 25,
+            "n_fall_detected": 23,
+            "n_adl": 33,
+            "n_false_alarms": 7,
+            "adl_hours": 0.15300000000000002,
+            "far_per_day": 1098.0392156862745
+          },
+          "U10": {
+            "n_fall": 25,
+            "n_fall_detected": 24,
+            "n_adl": 33,
+            "n_false_alarms": 4,
+            "adl_hours": 0.12566111111111114,
+            "far_per_day": 763.9595030726379
+          },
+          "U21": {
+            "n_fall": 0,
+            "n_fall_detected": 0,
+            "n_adl": 12,
+            "n_false_alarms": 3,
+            "adl_hours": 0.043399999999999994,
+            "far_per_day": 1658.9861751152075
+          },
+          "U28": {
+            "n_fall": 0,
+            "n_fall_detected": 0,
+            "n_adl": 16,
+            "n_false_alarms": 1,
+            "adl_hours": 0.04941111111111112,
+            "far_per_day": 485.72071059140984
+          }
+        }
+      }
+    }
+  ],
+  "snn_escalation": {
+    "available": true,
+    "role": "raises possible_fall to fall only; never clears a rule fall",
+    "tau": 0.7,
+    "delta_acc": 0.05,
+    "delta_gyr": 6.0,
+    "test": {
+      "n_fall": 75,
+      "n_fall_detected": 72,
+      "sensitivity": 0.96,
+      "sensitivity_ci95": [
+        0.8888683137691623,
+        0.9863041839985135
+      ],
+      "n_adl": 127,
+      "n_false_alarms": 26,
+      "false_alarms_per_adl_trial": 0.2047244094488189,
+      "specificity": 0.7952755905511811,
+      "adl_hours": 0.5054222222222222,
+      "far_per_resident_day": 1277.373990316516,
+      "far_per_day_note": "Extrapolated from scripted WEDA clips, not a free-living day. The cancel window is not applied.",
+      "per_subject": {
+        "U07": {
+          "n_fall": 25,
+          "n_fall_detected": 23,
+          "n_adl": 33,
+          "n_false_alarms": 7,
+          "adl_hours": 0.13394999999999999,
+          "far_per_day": 1254.1993281075029
+        },
+        "U08": {
+          "n_fall": 25,
+          "n_fall_detected": 25,
+          "n_adl": 33,
+          "n_false_alarms": 7,
+          "adl_hours": 0.15300000000000002,
+          "far_per_day": 1098.0392156862745
+        },
+        "U10": {
+          "n_fall": 25,
+          "n_fall_detected": 24,
+          "n_adl": 33,
+          "n_false_alarms": 7,
+          "adl_hours": 0.12566111111111114,
+          "far_per_day": 1336.9291303771163
+        },
+        "U21": {
+          "n_fall": 0,
+          "n_fall_detected": 0,
+          "n_adl": 12,
+          "n_false_alarms": 4,
+          "adl_hours": 0.043399999999999994,
+          "far_per_day": 2211.981566820277
+        },
+        "U28": {
+          "n_fall": 0,
+          "n_fall_detected": 0,
+          "n_adl": 16,
+          "n_false_alarms": 1,
+          "adl_hours": 0.04941111111111112,
+          "far_per_day": 485.72071059140984
+        }
+      }
+    }
+  }
+}

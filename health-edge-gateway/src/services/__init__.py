@@ -1,1 +1,1 @@
-"""Deployable edge microservices. Scientific logic lives in ``algorithms``."""
+"""Deployable edge microservices. Scientific logic lives in ``domain``."""

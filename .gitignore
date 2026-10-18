@@ -123,5 +123,12 @@ mosquitto/log/
 Thumbs.db
 Desktop.ini
 
+# Downloaded / prepared ML datasets (keep scripts + README)
+health-edge-gateway/data/raw/
+health-edge-gateway/data/**/windows.npz
+health-edge-gateway/data/**/*.csv
+!health-edge-gateway/data/README.md
+!health-edge-gateway/data/catalog.local.example.json
+
 # Accidental extra tree at repo root (code lives under health-edge-gateway/)
 /src/

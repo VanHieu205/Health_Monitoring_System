@@ -1,1 +1,0 @@
-# Sliding window segmenter

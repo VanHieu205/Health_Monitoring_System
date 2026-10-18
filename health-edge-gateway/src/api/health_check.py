@@ -1,1 +1,0 @@
-# Kubernetes liveness & readiness probe endpoints (/healthz)

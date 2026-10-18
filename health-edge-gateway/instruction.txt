@@ -1,0 +1,112 @@
+Lệnh chạy từ preprocess tới train
+Chạy mọi lệnh trong thư mục health-edge-gateway.
+Script tự thêm src vào PYTHONPATH, không cần set thêm.
+
+Ba nhánh:
+  arch.snn   WEDA-Fall   data/weda_fall/windows.npz    phát hiện té ngã
+  arch.sqi   PPG-DaLiA   data/ppg_dalia/windows.npz    chất lượng tín hiệu
+  arch.trend MIMIC-IV    data/mimic_iv/windows.npz     xu hướng NEWS2
+
+Preprocess không có lệnh riêng. import_dataset.py đọc CSV gốc,
+cắt cửa sổ và ghi windows.npz. Train đọc file đó.
+
+
+1. Nhánh té ngã (arch.snn) — đang dùng
+
+1.1. Tạo lại windows.npz từ CSV đã tải (không tải lại từ GitHub)
+
+    python scripts/learning/import_dataset.py --dataset weda_fall --skip-fetch --force --data-dir data
+
+    --skip-fetch   dùng data/raw/weda_fall
+    --force        ghi đè data/weda_fall/windows.npz
+                   bỏ --force thì file cũ được giữ nguyên
+
+    Nhãn ghi vào file (src/learning/training/data/prepare/weda.py):
+      D04 ngồi-đứng            -> sit_stand
+      D01 đi, D03 cầu thang, D11 mở cửa -> walk
+      F01-F08                  -> fall_like
+      D02 chạy, D05 ngồi sụp, D06 cúi, D07 vấp, D08 nhảy,
+      D09 đập bàn, D10 vỗ tay  -> impact_adl
+
+    Lần đầu, chưa có CSV gốc:
+
+    python scripts/learning/import_dataset.py --dataset weda_fall --data-dir data
+
+    Hoặc trỏ vào thư mục đã giải nén:
+
+    python scripts/learning/import_dataset.py --dataset weda_fall --from-local D:\data\WEDA-FALL --data-dir data
+
+1.2. Xem file đã cắt (không train)
+
+    python scripts/learning/inspect_snn_dataset.py --data-dir data --seed 42
+
+1.3. Xem CSV gốc trước khi gộp lớp (không train, không đổi cutoff trên tập test)
+
+    python scripts/learning/analyze_weda_preprocess.py --data-dir data --seed 42
+
+    Kết quả ghi thêm: artifacts/learning/arch_snn/raw_profile.txt
+
+1.4. Train
+
+    python scripts/learning/train_models.py --arch arch.snn --data-dir data --no-synthetic --epochs 12
+
+    --no-synthetic  thiếu windows.npz thì dừng, không tự sinh dữ liệu giả
+    --epochs 12     số epoch của lần train cuối, sau khi tune
+    --seed 42       cùng seed với inspect (chia theo người, không chia theo cửa sổ)
+
+    Mỗi cửa sổ spike được nối thêm 5 kênh: hướng trọng lực (trung bình
+    gia tốc 3 trục), nhịp bước (số lần SMV vượt một mức g so với trung vị),
+    và nhịp gyro (mức cố định 30 độ/giây). Mức nhịp bước lấy từ người già
+    trong tập train, kẹp trong [0,05; 0,15] g. Ngưỡng SMV của nhãn ngã
+    chọn trên val. Trọng số lớp là căn bậc hai của nghịch tần suất.
+    model.pt cũ (16 kênh, 3 lớp) không dùng cho mạng 17 kênh, 4 lớp.
+
+    Kết quả:
+      artifacts/learning/arch_snn/model.pt
+      artifacts/learning/arch_snn/report.json
+      artifacts/learning/arch_snn/eda.json
+      artifacts/learning/arch_snn/eda.md
+
+    Log in từng epoch: loss, val_acc, val_f1, val_se_fall.
+    Epoch được lưu là epoch có điểm 0.5*F1-macro + 0.5*recall_ngã cao nhất trên val.
+    Ngưỡng tau chọn trên val. Không chỉnh tau trên tập test.
+
+Sửa bảng nhãn trong weda.py xong thì chạy lại bước 1.1, rồi 1.4.
+model.pt cũ không tự cập nhật.
+
+1.5. Xem một lần ghi thật, không cần đồng hồ
+
+    python scripts/learning/replay_trial.py --code F01 --subject U07
+    python scripts/learning/replay_trial.py --code D01 --subject U07
+    python scripts/learning/replay_trial.py --code D10 --subject U07
+
+    U07, U08, U10, U21, U28 là người ở tập test. F01 là ngã, D01 là đi,
+    D10 là vỗ tay. Dòng chữ S/W/F là nhãn từng cửa sổ 2 giây.
+
+
+2. Nhánh chất lượng tín hiệu (arch.sqi)
+
+    python scripts/learning/import_dataset.py --dataset ppg_dalia --data-dir data
+    python scripts/learning/train_models.py --arch arch.sqi --data-dir data --no-synthetic --epochs 12
+
+    Đã có raw và muốn cắt lại:
+
+    python scripts/learning/import_dataset.py --dataset ppg_dalia --skip-fetch --force --data-dir data
+
+    Kết quả: artifacts/learning/arch_sqi/
+
+
+3. Nhánh xu hướng (arch.trend)
+
+MIMIC-IV cần quyền PhysioNet. Không tải bằng lệnh GitHub.
+Xuất CSV rồi:
+
+    python scripts/learning/import_dataset.py --dataset mimic_iv --from-csv exports/vitals.csv --data-dir data
+    python scripts/learning/train_models.py --arch arch.trend --data-dir data --no-synthetic --epochs 12
+
+    Kết quả: artifacts/learning/arch_trend/
+
+
+4. Xem dataset đã đăng ký
+
+    python scripts/learning/import_dataset.py --list

@@ -1,0 +1,51 @@
+# EDA `arch.snn`
+
+Source: `weda_fall`
+
+- **source**: weda_fall
+- **n_windows**: 8393
+- **n_subjects**: 25
+## class_counts
+```json
+{
+  "sit_stand": 698,
+  "walk": 3299,
+  "fall_like": 1227,
+  "impact_adl": 3169
+}
+```
+- **imbalance_ratio**: 4.726361031518625
+## per_class
+```json
+{
+  "sit_stand": {
+    "n": 698,
+    "smv_peak_mean": 1.2923204898834229,
+    "smv_peak_p95": 1.7614960670471191
+  },
+  "walk": {
+    "n": 3299,
+    "smv_peak_mean": 1.563681721687317,
+    "smv_peak_p95": 2.3231585025787354
+  },
+  "fall_like": {
+    "n": 1227,
+    "smv_peak_mean": 3.7289819717407227,
+    "smv_peak_p95": 6.1336541175842285
+  },
+  "impact_adl": {
+    "n": 3169,
+    "smv_peak_mean": 2.5669076442718506,
+    "smv_peak_p95": 4.760350704193115
+  }
+}
+```
+## Notes
+- 2 s windows on a uniform 50 Hz grid; split by subject, young/elder stratified for WEDA ids.
+- Accel stored in g. Gyro stored in deg/s (WEDA rad/s × 180/π).
+- fall_like requires ≥50% overlap with the annotated interval, or the trial SMV peak inside that interval.
+- Training head is sit_stand, walk, fall_like, impact_adl. rest and not_worn are omitted.
+- Jog, stumble, jump, hit-table, clap, collapse-sit and crouch are impact_adl, not a fall.
+- SMV rhythm band is fit on training elders' walk. Gyro rhythm uses a fixed 30 deg/s band.
+- A fall prediction also requires the window SMV peak to clear a floor chosen on validation.
+- Class weights are the square root of inverse frequency.

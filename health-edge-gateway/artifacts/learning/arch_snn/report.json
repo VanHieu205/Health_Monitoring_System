@@ -1,0 +1,343 @@
+{
+  "architecture": "arch.snn",
+  "source": "weda_fall",
+  "eda": {
+    "source": "weda_fall",
+    "n_windows": 8393,
+    "n_subjects": 25,
+    "class_counts": {
+      "sit_stand": 698,
+      "walk": 3299,
+      "fall_like": 1227,
+      "impact_adl": 3169
+    },
+    "imbalance_ratio": 4.726361031518625,
+    "per_class": {
+      "sit_stand": {
+        "n": 698,
+        "smv_peak_mean": 1.2923204898834229,
+        "smv_peak_p95": 1.7614960670471191
+      },
+      "walk": {
+        "n": 3299,
+        "smv_peak_mean": 1.563681721687317,
+        "smv_peak_p95": 2.3231585025787354
+      },
+      "fall_like": {
+        "n": 1227,
+        "smv_peak_mean": 3.7289819717407227,
+        "smv_peak_p95": 6.1336541175842285
+      },
+      "impact_adl": {
+        "n": 3169,
+        "smv_peak_mean": 2.5669076442718506,
+        "smv_peak_p95": 4.760350704193115
+      }
+    },
+    "notes": [
+      "2 s windows on a uniform 50 Hz grid; split by subject, young/elder stratified for WEDA ids.",
+      "Accel stored in g. Gyro stored in deg/s (WEDA rad/s \u00d7 180/\u03c0).",
+      "fall_like requires \u226550% overlap with the annotated interval, or the trial SMV peak inside that interval.",
+      "Training head is sit_stand, walk, fall_like, impact_adl. rest and not_worn are omitted.",
+      "Jog, stumble, jump, hit-table, clap, collapse-sit and crouch are impact_adl, not a fall.",
+      "SMV rhythm band is fit on training elders' walk. Gyro rhythm uses a fixed 30 deg/s band.",
+      "A fall prediction also requires the window SMV peak to clear a floor chosen on validation.",
+      "Class weights are the square root of inverse frequency."
+    ]
+  },
+  "split": {
+    "n_train": 5472,
+    "n_val": 1031,
+    "n_test": 1890,
+    "subjects_train": [
+      "U02",
+      "U03",
+      "U05",
+      "U06",
+      "U09",
+      "U11",
+      "U12",
+      "U13",
+      "U14",
+      "U22",
+      "U23",
+      "U24",
+      "U26",
+      "U27",
+      "U29",
+      "U30",
+      "U31"
+    ],
+    "subjects_val": [
+      "U01",
+      "U04",
+      "U25"
+    ],
+    "subjects_test": [
+      "U07",
+      "U08",
+      "U10",
+      "U21",
+      "U28"
+    ],
+    "rule": "split_by_subject_no_window_leakage"
+  },
+  "tune": {
+    "best": {
+      "lr": 0.001,
+      "beta": 0.9,
+      "delta_acc": 0.05,
+      "delta_gyr": 6.0
+    },
+    "trials": [
+      {
+        "lr": 0.001,
+        "beta": 0.9,
+        "delta_acc": 0.05,
+        "delta_gyr": 6.0,
+        "accuracy": 0.539282250242483,
+        "f1_macro": 0.52189110776216,
+        "sensitivity_fall_like": 0.7647058823529411,
+        "score": 0.6432984950575505
+      },
+      {
+        "lr": 0.0005,
+        "beta": 0.85,
+        "delta_acc": 0.1,
+        "delta_gyr": 20.0,
+        "accuracy": 0.550921435499515,
+        "f1_macro": 0.5101579848944068,
+        "sensitivity_fall_like": 0.49411764705882355,
+        "score": 0.5021378159766152
+      },
+      {
+        "lr": 0.002,
+        "beta": 0.95,
+        "delta_acc": 0.17,
+        "delta_gyr": 40.0,
+        "accuracy": 0.5780795344325897,
+        "f1_macro": 0.5379303609565438,
+        "sensitivity_fall_like": 0.711764705882353,
+        "score": 0.6248475334194483
+      },
+      {
+        "lr": 0.001,
+        "beta": 0.8,
+        "delta_acc": 0.34,
+        "delta_gyr": 20.0,
+        "accuracy": 0.5877788554801164,
+        "f1_macro": 0.546099357860918,
+        "sensitivity_fall_like": 0.7294117647058823,
+        "score": 0.6377555612834002
+      }
+    ]
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 69.35929894029049,
+      "val_accuracy": 0.48884578079534435,
+      "val_f1_macro": 0.4278085726477836,
+      "val_f1_per_class": [
+        0.30243902439024384,
+        0.5228951255539143,
+        0.31645569620253167,
+        0.5694444444444445
+      ],
+      "val_sensitivity_fall_like": 0.29411764705882354
+    },
+    {
+      "epoch": 2,
+      "train_loss": 23.34487411153247,
+      "val_accuracy": 0.513094083414161,
+      "val_f1_macro": 0.4526220875319318,
+      "val_f1_per_class": [
+        0.2937853107344633,
+        0.5484351713859911,
+        0.3974763406940063,
+        0.5707915273132664
+      ],
+      "val_sensitivity_fall_like": 0.37058823529411766
+    },
+    {
+      "epoch": 3,
+      "train_loss": 15.217703177914983,
+      "val_accuracy": 0.5548011639185257,
+      "val_f1_macro": 0.4709580193253259,
+      "val_f1_per_class": [
+        0.25974025974025977,
+        0.6240786240786241,
+        0.4086021505376344,
+        0.5914110429447853
+      ],
+      "val_sensitivity_fall_like": 0.3352941176470588
+    },
+    {
+      "epoch": 4,
+      "train_loss": 11.679524066155416,
+      "val_accuracy": 0.542192046556741,
+      "val_f1_macro": 0.4738460864180297,
+      "val_f1_per_class": [
+        0.20238095238095238,
+        0.6133682830930538,
+        0.5246753246753246,
+        0.5549597855227882
+      ],
+      "val_sensitivity_fall_like": 0.5941176470588235
+    },
+    {
+      "epoch": 5,
+      "train_loss": 9.769932705059386,
+      "val_accuracy": 0.533462657613967,
+      "val_f1_macro": 0.4871413821445517,
+      "val_f1_per_class": [
+        0.2719298245614035,
+        0.6124661246612466,
+        0.5195402298850574,
+        0.5446293494704992
+      ],
+      "val_sensitivity_fall_like": 0.6647058823529411
+    },
+    {
+      "epoch": 6,
+      "train_loss": 8.604476710509138,
+      "val_accuracy": 0.46071774975751695,
+      "val_f1_macro": 0.3983540768640981,
+      "val_f1_per_class": [
+        0.19161676646706585,
+        0.36182902584493043,
+        0.47739602169981915,
+        0.5625744934445769
+      ],
+      "val_sensitivity_fall_like": 0.7764705882352941
+    },
+    {
+      "epoch": 7,
+      "train_loss": 7.413832461624815,
+      "val_accuracy": 0.5829291949563531,
+      "val_f1_macro": 0.515938860154712,
+      "val_f1_per_class": [
+        0.25555555555555554,
+        0.6501854140914709,
+        0.558282208588957,
+        0.5997322623828647
+      ],
+      "val_sensitivity_fall_like": 0.5352941176470588
+    },
+    {
+      "epoch": 8,
+      "train_loss": 6.574071851390147,
+      "val_accuracy": 0.5567410281280311,
+      "val_f1_macro": 0.5070566162964107,
+      "val_f1_per_class": [
+        0.2843601895734597,
+        0.6231691078561918,
+        0.5458823529411765,
+        0.5748148148148149
+      ],
+      "val_sensitivity_fall_like": 0.6823529411764706
+    },
+    {
+      "epoch": 9,
+      "train_loss": 5.814441937452171,
+      "val_accuracy": 0.5470417070805044,
+      "val_f1_macro": 0.48795852005817386,
+      "val_f1_per_class": [
+        0.23655913978494625,
+        0.5796661608497723,
+        0.5373831775700934,
+        0.5982256020278834
+      ],
+      "val_sensitivity_fall_like": 0.6764705882352942
+    },
+    {
+      "epoch": 10,
+      "train_loss": 5.341794331868489,
+      "val_accuracy": 0.6013579049466538,
+      "val_f1_macro": 0.5182498174450612,
+      "val_f1_per_class": [
+        0.21428571428571427,
+        0.6650124069478909,
+        0.5791044776119403,
+        0.614596670934699
+      ],
+      "val_sensitivity_fall_like": 0.5705882352941176
+    },
+    {
+      "epoch": 11,
+      "train_loss": 4.900117032709177,
+      "val_accuracy": 0.5286129970902037,
+      "val_f1_macro": 0.44536624155769844,
+      "val_f1_per_class": [
+        0.16923076923076924,
+        0.48263888888888895,
+        0.5257452574525745,
+        0.6038500506585612
+      ],
+      "val_sensitivity_fall_like": 0.5705882352941176
+    },
+    {
+      "epoch": 12,
+      "train_loss": 4.769916201195522,
+      "val_accuracy": 0.6013579049466538,
+      "val_f1_macro": 0.5318208933405012,
+      "val_f1_per_class": [
+        0.271604938271605,
+        0.6740196078431372,
+        0.5773809523809524,
+        0.6042780748663102
+      ],
+      "val_sensitivity_fall_like": 0.5705882352941176
+    }
+  ],
+  "test": {
+    "accuracy": 0.6275132275132275,
+    "f1_macro": 0.5600956667027481,
+    "f1_per_class": [
+      0.2324561403508772,
+      0.7237740533829919,
+      0.6419213973799126,
+      0.6422310756972112
+    ],
+    "sensitivity_fall_like": 0.5697674418604651,
+    "confusion": [
+      [
+        53,
+        62,
+        0,
+        29
+      ],
+      [
+        125,
+        583,
+        5,
+        59
+      ],
+      [
+        15,
+        48,
+        147,
+        48
+      ],
+      [
+        119,
+        146,
+        48,
+        403
+      ]
+    ],
+    "classes": [
+      "sit_stand",
+      "walk",
+      "fall_like",
+      "impact_adl"
+    ],
+    "n_test": 1890,
+    "fall_tau": 0.95,
+    "smv_floor": 2.0
+  },
+  "checkpoint": "artifacts\\learning\\arch_snn\\model.pt",
+  "n_samples": 5472,
+  "algorithm_version": "4.0.0-hospital-news2",
+  "generated_at": "2026-10-18T14:36:35.611060+00:00"
+}

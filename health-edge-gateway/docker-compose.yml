@@ -12,7 +12,7 @@ services:
 
   ingest:
     build: .
-    command: python src/services/ingest_service.py
+    command: python -m services.ingest
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -25,7 +25,7 @@ services:
 
   signal-proc:
     build: .
-    command: python src/services/signal_proc_service.py
+    command: python -m services.signal
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -38,7 +38,7 @@ services:
 
   news2:
     build: .
-    command: python src/services/news2_service.py
+    command: python -m services.news2
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -51,7 +51,7 @@ services:
 
   fall:
     build: .
-    command: python src/services/fall_service.py
+    command: python -m services.fall
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -64,7 +64,7 @@ services:
 
   trend:
     build: .
-    command: python src/services/trend_service.py
+    command: python -m services.trend
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -77,7 +77,7 @@ services:
 
   fusion:
     build: .
-    command: python src/services/fusion_service.py
+    command: python -m services.fusion
     environment:
       PYTHONPATH: /app/src
       MQTT_BROKER: local-mqtt
@@ -90,7 +90,7 @@ services:
 
   fl-client:
     build: .
-    command: python src/federated_learning/fl_client.py
+    command: python -m learning.fl_client
     environment:
       PYTHONPATH: /app/src
       FL_ONCE: "1"

@@ -1,0 +1,38 @@
+# EDA `arch.sqi`
+
+Source: `synthetic_dalia_like`
+
+- **source**: synthetic_dalia_like
+- **n_windows**: 300
+- **n_subjects**: 5
+- **n_good**: 238
+- **n_bad**: 62
+- **yield**: 0.7933333333333333
+## features
+```json
+{
+  "iqr_hr": {
+    "mean_good": 6.787022113800049,
+    "mean_bad": 17.340089797973633
+  },
+  "n_beats": {
+    "mean_good": 29.43277359008789,
+    "mean_bad": 17.387096405029297
+  },
+  "rms_acc_g": {
+    "mean_good": 0.06458953022956848,
+    "mean_bad": 0.15832559764385223
+  },
+  "ac_dc": {
+    "mean_good": 0.025997750461101532,
+    "mean_bad": 0.012120749801397324
+  },
+  "motion_code": {
+    "mean_good": 0.7983193397521973,
+    "mean_bad": 1.774193525314331
+  }
+}
+```
+## Notes
+- y=1 when |HR_ppg - HR_ref| <= 5 bpm. Do not label from the IQR rule.
+- PPG-DaLiA has no SpO2 reference — the SpO2 gate stays rule-based.

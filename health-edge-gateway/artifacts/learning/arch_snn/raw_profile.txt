@@ -1,0 +1,66 @@
+WEDA raw profile (50 Hz folder, accel in g, gyro in deg/s)
+trials used: 969
+
+== missing / irregular raw ==
+grouped files: 969
+no accel file: 0
+no gyro file: 0
+too short for a 2 s window: 0
+backward or duplicate accel timestamps: 27
+accel gaps longer than 100 ms: 10467
+resampled trials whose gyro was missing (zeros): 0
+
+== per activity code, whole trial ==
+code   name             merge         n  sec_p50  smv_p50  smv_p95  gyr_p50  win>=2.5g
+D01    walk             walk         68     18.4     1.67     2.47      351    8/1161 
+D02    jog              walk         42     17.5     4.68     5.62      641  637/702  
+D03    stairs           walk         52     27.2     2.40     4.39      448   99/1411 
+D04    sit-stand        sit_stand    71     11.3     1.57     2.15      305    1/698  
+D05    collapse-sit     sit_stand    42      9.3     2.35     4.44      356   28/359  
+D06    crouch           sit_stand    42     13.3     2.38     3.80      673   56/561  
+D07    stumble          walk         42      9.2     3.30     5.65      534   82/334  
+D08    jump             walk         42      6.3     3.20     4.98      594   97/216  
+D09    hit-table        walk         73      6.3     3.88     5.04      555  132/360  
+D10    clap             walk         74     10.0     3.84     5.36      398  400/637  
+D11    door             walk         71     11.9     1.79     3.29      369   19/727  
+F01    fall-slip-fwd    fall_like    42     12.6     5.56     6.45      567  100/150  
+F02    fall-slip-side   fall_like    42     12.3     5.20     6.55      661  108/145  
+F03    fall-slip-back   fall_like    42     13.3     5.11     6.48      793  107/151  
+F04    fall-trip        fall_like    42     12.4     5.16     6.42      611  100/144  
+F05    fall-sit-back    fall_like    42      9.9     4.50     5.92      630  104/145  
+F06    fall-sit-fwd     fall_like    42     11.9     4.28     6.09      562   89/155  
+F07    fall-sit-back2   fall_like    42     10.8     4.91     6.19      660  107/144  
+F08    fall-sit-side    fall_like    56     10.6     4.49     6.28      642  130/193  
+
+== fall trials: inside vs outside the annotated impact ==
+code      n   in_p50  out_p50   kept  dropped  kept<2g
+F01      42     5.56     1.74    150      318       45
+F02      42     5.20     1.79    145      306       29
+F03      42     5.11     1.90    151      355       35
+F04      42     5.16     1.87    144      310       32
+F05      42     4.50     1.63    145      236       27
+F06      42     4.20     2.02    155      295       56
+F07      42     4.91     1.69    144      265       30
+F08      56     4.49     1.63    193      348       46
+
+== walk merge: which codes produce SMV >= 2.5 g windows ==
+D01 walk            8/1161   (1% of its windows)
+D02 jog           637/702    (91% of its windows)
+D03 stairs         99/1411   (7% of its windows)
+D07 stumble        82/334    (25% of its windows)
+D08 jump           97/216    (45% of its windows)
+D09 hit-table     132/360    (37% of its windows)
+D10 clap          400/637    (63% of its windows)
+D11 door           19/727    (3% of its windows)
+
+== SMV-only fall rule, cutoff fit on train subjects to reach 90% sensitivity ==
+Predict fall when the 2 s SMV peak >= cutoff. This is a ceiling check, not the SNN.
+train cutoff for >=90% of train fall windows: 1.31 g
+train fall_windows= 799  sensitivity=0.901  false_alarms=3459/4673 (FPR=0.740)
+val   fall_windows= 170  sensitivity=0.959  false_alarms= 672/861  (FPR=0.780)
+test  fall_windows= 258  sensitivity=0.903  false_alarms=1215/1632 (FPR=0.744)
+
+Read test as a check only. Retuning this cutoff on test recall is leakage.
+If train needs a low cutoff to pass 90%, jog/stumble/jump/clap windows are called falls too.
+Dropping D07-D11 from the walk label, on every split, is the preprocess that targets that overlap.
+Dropping fall windows under 2 g raises recall by changing the positive definition; report that separately.
